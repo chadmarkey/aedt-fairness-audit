@@ -181,6 +181,14 @@ def _build_model(model_name: str, seed: int):
         ])
     if model_name == "linear_score":
         return None
+    if model_name == "quadratic_aggregation":
+        # Patent §530 (col. 23 line 53): per-feature contributions raised to
+        # power of two before aggregation. Sign-preserving square so
+        # negative contributions don't flip direction.
+        return None
+    if model_name == "cubic_aggregation":
+        # Variant: power of three (preserves sign naturally).
+        return None
     raise ValueError(f"Unsupported model_name: {model_name}")
 
 
@@ -194,6 +202,26 @@ def _linear_score_prob(X: np.ndarray, cfg: SimulationConfig) -> np.ndarray:
         + b["score_d"] * X[:, 4]
         + b["narrative_sentiment"] * X[:, 5]
     )
+    return 1.0 / (1.0 + np.exp(-z))
+
+
+def _power_aggregation_prob(X: np.ndarray, cfg: SimulationConfig, power: int) -> np.ndarray:
+    """Patent §530 (col. 23 line 53)-style aggregation: per-feature
+    contributions raised to a fixed integer power before summation.
+
+    For even powers, sign is preserved by ``sign(c) * |c|**p`` so a
+    negative contribution does not become positive after squaring.
+    """
+    b = cfg.betas
+    contributions = np.column_stack([
+        b["score_a"] * (X[:, 0] - cfg.dgp_params["score_a"]["center"]),
+        b["publications"] * (X[:, 1] - cfg.dgp_params["publications"]["center"]),
+        b["score_b"] * (X[:, 2] - cfg.dgp_params["score_b"]["center"]),
+        b["score_c"] * X[:, 3],
+        b["score_d"] * X[:, 4],
+        b["narrative_sentiment"] * X[:, 5],
+    ])
+    z = np.sum(np.sign(contributions) * np.abs(contributions) ** power, axis=1)
     return 1.0 / (1.0 + np.exp(-z))
 
 
@@ -265,7 +293,12 @@ def train_and_screen(
 
     clf = _build_model(model_name, seed)
     if clf is None:
-        proba = _linear_score_prob(X_test, cfg)
+        if model_name == "quadratic_aggregation":
+            proba = _power_aggregation_prob(X_test, cfg, power=2)
+        elif model_name == "cubic_aggregation":
+            proba = _power_aggregation_prob(X_test, cfg, power=3)
+        else:
+            proba = _linear_score_prob(X_test, cfg)
     else:
         clf.fit(X_train, y_train)
         proba = clf.predict_proba(X_test)[:, 1]
