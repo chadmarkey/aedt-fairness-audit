@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+title: "AEDT Fairness Audit Toolkit"
+message: "If you use this toolkit in research, please cite it as below."
+type: software
+authors:
+  - family-names: Markey
+    given-names: Chad
+abstract: >-
+  A research toolkit for fairness auditing of automated employment
+  decision tools (AEDTs). Includes generic AIF360-style fairness metrics,
+  an implementation of the input-side Bias Mitigator described in Claim 1
+  of US Patent No. 12,265,502 B1, and a Personal Statement attribute
+  extractor implementing the four questions enumerated in the same patent
+  at column 10. Intended for fairness researchers, journalists,
+  regulators, and counsel auditing AEDTs whose architectures are publicly
+  documented.
+keywords:
+  - algorithmic fairness
+  - automated employment decision tools
+  - AEDT
+  - bias mitigation
+  - audit methodology
+  - residency screening
+license: MIT
+version: "0.1.0"
