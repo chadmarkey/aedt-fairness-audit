@@ -17,7 +17,13 @@ The library does not include an AEDT pipeline implementation. Users supply
 their own scoring function via the `pipeline_fn` interface. See
 [`PIPELINE_BUILD_GUIDE.md`](PIPELINE_BUILD_GUIDE.md) for how to build a
 pipeline replicating the architecture disclosed in U.S. Patent No.
-12,265,502 B1 from off-the-shelf libraries.
+12,265,502 B1 from off-the-shelf libraries. This is no different than
+going to the museum and sketching an image of a sculpture into a
+notebook, or asking someone to put six different Lego blocks together.
+This is publicly available information sanctioned by the Federal
+government with stress tests modeled after fairness methods cited and
+endorsed by the AAMC. Feel free to contribute and/or offer critiques and
+feedback.
 
 ## Components
 
@@ -75,6 +81,46 @@ python -m tools.run_audit_1 \
     --pipeline my_pipeline:score_texts \
     --out-dir out/audit_1
 ```
+
+### Dilution test — multi-instrument narrative-tone audit
+
+Scores user-supplied narrative variants under multiple sentiment
+instruments (VADER, transformer, LLM judge), at excerpt level and at
+full-document level via a skeleton template with a
+`{VARIANT_PARAGRAPH}` placeholder.
+
+```bash
+python -m tools.run_dilution_test \
+    --config examples/dilution_test_template.json \
+    --out-dir out/dilution_test
+```
+
+The template format declares variants, instruments, the skeleton
+document path, and the variant pairs to compute gaps for. The
+included `examples/mspe_skeleton_template.txt` is a generic
+MSPE-style skeleton with placeholders for student name, school, and
+dates. Output: per-instrument per-variant compound scores, pairwise
+gaps, and dilution ratios.
+
+### Screening simulation — DI under sentiment-instrument anchorings
+
+Generates n synthetic applicants under each user-supplied sentiment
+anchoring, trains a screening model, ranks at top-K, and reports
+disparate impact with bootstrap CIs. The user supplies sentiment
+anchorings (one per sentiment instrument they tested) — actual narrative
+text is not required.
+
+```bash
+python -m tools.run_screening_simulation \
+    --anchorings examples/screening_anchorings_template.json \
+    --out-dir out/screening_simulation \
+    --n 6000 --invite-rate 0.30 --bootstrap-reps 1000
+```
+
+The template format expects one entry per sentiment instrument with
+`{label, low_sentiment, high_sentiment}`. Output: per-anchoring DI
+metrics with 95% bootstrap CIs, written to
+`screening_simulation_results.json`.
 
 ### Audit 2 — PS four-question extraction
 
@@ -147,6 +193,75 @@ python -m tools.smoke_test
 
 Runs a 16-document hand-curated corpus through the BiasMitigator,
 PSExtractor, and per-axis fairness metrics. ~1 minute end to end.
+
+## Methodology references
+
+### AAMC alignment
+
+The AAMC's published principles for the responsible use of AI in medical
+education explicitly recommend the kind of audit this library supports
+and name AI Fairness 360 (AIF360) by name as a recommended tool:
+
+> "Audit AI systems regularly. Schedule and conduct an annual audit of
+> the AI system and its output to identify AI-related biases and other
+> problems in the selection process. Collaborate with a dedicated team
+> of experts to analyze the findings and develop strategies for
+> continuous improvement to be implemented for the next cycle. Consult
+> recent and relevant journal articles and technical reports that have
+> used AI in selection processes, explore tools used to examine the
+> potential for bias like Admissible ML or **AI Fairness 360**, and
+> consult legal counsel when appropriate."
+
+Source: AAMC, *Principles for the Responsible Use of Artificial
+Intelligence in and for Medical Education — Protect Against
+Algorithmic Bias*,
+[aamc.org/about-us/mission-areas/medical-education/principles-ai/protect-against-algorithmic-bias](https://www.aamc.org/about-us/mission-areas/medical-education/principles-ai/protect-against-algorithmic-bias).
+
+The AAMC also recommends not changing the process mid-cycle and
+tracking all changes when they occur. The toolkit's manifest output
+(SHA-256 hashes of stage artifacts, full config dump, run timestamps)
+is designed to make process-version tracking auditable.
+
+### AI Fairness 360 (AIF360)
+
+The fairness-metric definitions implemented in `audit/` follow the AI
+Fairness 360 (AIF360) conventions. AIF360 itself is *not* a runtime
+dependency — the metrics are reimplemented here in numpy/pandas to keep
+installation light — but the mathematical definitions and naming follow
+AIF360's `ClassificationMetric` class.
+
+Specifically, this library replicates:
+
+- `disparate_impact` — selection-rate ratio between protected groups (the
+  EEOC four-fifths rule metric)
+- `statistical_parity_difference` — selection-rate difference
+- `equal_opportunity_difference` — true-positive-rate difference
+- `false_positive_rate_difference` — false-positive-rate difference
+- `accuracy` — overall classification accuracy
+
+Source for the AIF360 definitions:
+[github.com/Trusted-AI/AIF360/blob/master/aif360/metrics/classification_metric.py](https://github.com/Trusted-AI/AIF360/blob/master/aif360/metrics/classification_metric.py)
+
+Citation: Bellamy, R. K. E., Dey, K., Hind, M., Hoffman, S. C., Houde, S.,
+Kannan, K., et al. (2018). *AI Fairness 360: An Extensible Toolkit for
+Detecting, Understanding, and Mitigating Unwanted Algorithmic Bias.*
+arXiv:1810.01943. [github.com/Trusted-AI/AIF360](https://github.com/Trusted-AI/AIF360)
+
+If you prefer to use AIF360 directly rather than the reimplementations
+here, the metric definitions are bytewise compatible — substitute
+`aif360.metrics.ClassificationMetric` calls in your own code where this
+library uses its functions of the same names.
+
+Other methodology references:
+
+- VADER sentiment: Hutto, C. J. & Gilbert, E. (2014). *VADER: A
+  Parsimonious Rule-based Model for Sentiment Analysis of Social Media
+  Text.* ICWSM.
+- Sentence-BERT: Reimers, N. & Gurevych, I. (2019). *Sentence-BERT:
+  Sentence Embeddings using Siamese BERT-Networks.* EMNLP.
+- HDBSCAN: Campello, R. J. G. B., Moulavi, D., & Sander, J. (2013).
+  *Density-based clustering based on hierarchical density estimates.*
+  PAKDD.
 
 ## Citation
 

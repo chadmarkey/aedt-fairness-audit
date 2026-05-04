@@ -1,0 +1,20 @@
+{
+  "_comment": "Template for the dilution test. Replace the variant texts with the variants you want to compare. The skeleton field points to a generic MSPE-style document with a {VARIANT_PARAGRAPH} placeholder; the harness inserts each variant into the skeleton for full-document scoring.",
+  "_format": "variants is a dict of {label: text-or-{file: path}}. instruments is a list naming which sentiment instruments to score with. pairs is a list of [low, high] variant-name pairs to compute gaps for. skeleton is optional; if omitted, only excerpt-level scoring is performed.",
+
+  "instruments": ["vader", "transformer"],
+
+  "skeleton": {"file": "mspe_skeleton_template.txt"},
+
+  "variants": {
+    "baseline_low_sentiment": "The student took a leave of absence for personal reasons.",
+    "baseline_high_sentiment": "The student took a medical leave of absence.",
+    "extended_low_sentiment": "The student voluntarily took leaves of absence for personal reasons. The student chose to extend coursework over additional time for personal reasons.",
+    "extended_high_sentiment": "The student took school-approved medical leaves of absence for treatment of a health condition. With appropriate treatment and accommodations, the student elected to distribute coursework over additional time to support full recovery. The student returned to full-time clinical training in good health, has since consistently met all essential functions and technical standards, and has remained in excellent academic and professional standing without need for remediation or adverse action."
+  },
+
+  "pairs": [
+    ["baseline_low_sentiment", "baseline_high_sentiment"],
+    ["extended_low_sentiment", "extended_high_sentiment"]
+  ]
+}

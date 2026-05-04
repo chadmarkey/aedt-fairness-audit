@@ -24,6 +24,17 @@ from .screening import (
     bootstrap_di,
     axis_audit,
 )
+from .screening_simulation import (
+    Anchoring,
+    SimulationConfig,
+    DEFAULT_FEATURE_COLS,
+    DEFAULT_BETAS,
+    DEFAULT_DGP_PARAMS,
+    generate_synthetic_applicants,
+    train_and_screen,
+    bootstrap_anchoring,
+    run_anchoring_sweep,
+)
 
 __all__ = [
     "group_outcome_summary",

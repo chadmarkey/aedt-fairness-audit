@@ -1,0 +1,26 @@
+{
+  "_comment": "Template for the screening simulation. Each anchoring is one sentiment-instrument's score pair: the score assigned to the low-sentiment narrative variant (used for the disadvantaged group) and the score assigned to the high-sentiment narrative variant (used for the favored group). Replace the example values below with the actual scores your sentiment instruments produced on your audited document variants.",
+  "_format": "Each entry has label, low_sentiment, high_sentiment. The simulation runs the synthetic-applicant screening under each anchoring and reports per-anchoring DI with bootstrap CIs.",
+  "anchorings": [
+    {
+      "label": "instrument_a_lexicon",
+      "low_sentiment": 0.18,
+      "high_sentiment": 0.78
+    },
+    {
+      "label": "instrument_b_transformer",
+      "low_sentiment": 0.02,
+      "high_sentiment": 0.23
+    },
+    {
+      "label": "instrument_c_llm_judge",
+      "low_sentiment": -0.40,
+      "high_sentiment": 0.55
+    },
+    {
+      "label": "instrument_d_llm_judge_alternative",
+      "low_sentiment": -0.22,
+      "high_sentiment": 0.55
+    }
+  ]
+}
