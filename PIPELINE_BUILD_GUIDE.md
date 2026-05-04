@@ -52,5 +52,4 @@ is built from off-the-shelf parts: `sentence-transformers`,
 
 A modern coding agent (Claude Code, Codex, or equivalent) with access
 to the patent PDF and these libraries will assemble a working pipeline
-in an afternoon. We do not provide pipeline source code here; we point
-at the public resources.
+in an afternoon. No pipeline source code here; just the public resources.
