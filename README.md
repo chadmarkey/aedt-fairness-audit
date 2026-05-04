@@ -2,6 +2,54 @@
 
 Fairness measurement library for automated employment decision tools.
 
+## In plain language (the upshot)
+
+This is software for measuring fairness in the AI tools that screen job
+applications.
+
+Some companies sell AI that reads documents — résumés, personal
+statements, recommendation letters — and ranks candidates for human
+reviewers. A 2025 U.S. patent (No. 12,265,502 B1) describes one such
+system in detail, including how it scores the personal statement and
+how it tries to remove bias.
+
+This toolkit does two things:
+
+- Implements the patent's bias-removal step and personal-statement
+  scoring step in open code that anyone can read and run.
+- Provides command-line audits that test whether those implementations
+  treat demographic groups equally on synthetic test data.
+
+The legal benchmark used throughout is the U.S. EEOC's **four-fifths
+rule**: a selection process is presumed to discriminate when one
+group is picked at less than 80% the rate of another (a selection-rate
+ratio below 0.80, or above 1.25 in the reverse direction).
+
+### What happens when you run it
+
+These are example numbers from a single run on 192 synthetic personal
+statements covering 24 demographic combinations. Specific values vary
+across runs; the patterns are what to expect.
+
+- The patent's personal-statement extractor produced selection-rate
+  ratios of 0.51–0.66 across demographic groups on three of four
+  questions — outside the four-fifths range.
+- Running the patent's own bias-removal step, which deletes names,
+  schools, and other demographic identifiers, did not close the gap.
+  The ratios stayed within ±0.09 of their pre-removal values.
+- A simulated 6,000-applicant screen using sentiment scores from real
+  text produced selection-rate ratios between 0.00 and 0.45 across
+  four sentiment instruments — all outside the four-fifths range.
+  When narrative sentiment alone was held constant across groups, the
+  ratios returned to approximately 1.0.
+
+The technical results, with confidence intervals and methodology, are
+in [`RESULTS.md`](RESULTS.md). The audit code is in `tools/`. The
+plotting code is in `plots/`. Everything is reproducible from the
+command line.
+
+---
+
 Implements:
 
 - AIF360-style fairness metrics: disparate impact, statistical parity,

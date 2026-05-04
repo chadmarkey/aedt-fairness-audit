@@ -244,19 +244,15 @@ move the DI ratio in chunks; the bootstrap distribution does not
 bracket the actual sample DI cleanly. The point DI is the relevant
 fairness measurement; the CI characterizes resampling stability.
 
-### Cross-extractor finding
+### Cross-extractor observation
 
-The SBERT and LLM extractors flag *different* demographic axes as
-biased on the same corpus:
+On the same corpus, the SBERT and LLM extractors fail EEOC 4/5 on
+different demographic axes:
 
-- SBERT: aggregate gender DI = 0.657 fails 4/5
-- LLM: per-question race DI = 0.51–0.59 fails 4/5 on three of four
-  questions
+- SBERT: aggregate gender DI = 0.657
+- LLM: per-question race DI = 0.51–0.59 on three of four questions
 
-Both produce disparate impact. The axis depends on architectural choices
-the patent does not specify. Disparate impact emerges across multiple
-reasonable implementations of Claim 1 and col. 10; the axis of
-disparity is implementation-dependent.
+The axis depends on architectural choices the patent does not specify.
 
 ---
 
@@ -275,10 +271,9 @@ levels:
 
 Ratio (within-seed-across-stratum / across-seed) = **0.615**.
 
-Demographic-marker embedding drift across strata is 61.5% of seed-level
-content drift. The audit's premise — that content is held constant
-within a seed and demographic strata vary the markers but not the
-narrative — is supported by embedding evidence.
+Mean within-seed-across-stratum cosine distance (0.253) is 61.5% of
+mean across-seed cosine distance (0.411). Within-seed-within-stratum
+distance (0.209) is the smallest of the three.
 
 ### Counterfactual decomposition
 
@@ -299,35 +294,22 @@ phrases) or by within-seed content variation.
 | academic_career | 0.587 | 0.587 | 0.000 | content-driven |
 | _total | 0.875 | 1.278 | +0.403 | content-driven |
 
-Three of the three race-axis questions that fail EEOC 4/5 retain DI in
-the 0.55–0.63 range after Claim 1 anonymization. The patent's own
-input-side mitigation — spec-faithful NER + curated identifier
-substitution — does not close the gap.
+After Claim 1 input-side anonymization (NER + curated identifier
+substitution), the three race-axis per-question DIs that failed EEOC
+4/5 in the original run (refugee, major_illness, academic_career)
+remain at 0.55–0.63 within ±0.09 of their original values. The
+aggregate `_total` row moves from 0.875 to 1.278; the magnitude is
+preserved, the direction reverses.
 
-The aggregate `_total` row crosses 1.0 post-stripping (0.875 → 1.278);
-the magnitude of disparity persists, the direction inverts. This is the
-mark of a content-driven signal: stripping identifiers leaves the
-underlying content variation untouched, and that residual variation
-preserves whichever stratum the LLM was already attending to.
-
-#### What this means for Claim 1
+For reference, the patent's Claim 1 specifies the mitigation as
+detect-and-replace on identifying tokens with semantic structure
+maintained:
 
 > "Bias mitigation operation including: Detecting one or more
 > potentially biasing identifiers from one or more document files;
 > Replacing one or more potentially biasing identifiers with one or more
 > corresponding neutral terms such that semantic structure is
 > maintained." — U.S. Patent No. 12,265,502 B1, claim 1.
-
-The patent's mitigation requirement is satisfied by detect-and-replace
-on identifying tokens. The semantic structure of the document is
-preserved by design. Where demographic signal lives in the semantic
-structure rather than the identifier tokens, the mitigation cannot
-reach it. The LLM extractor reads the residual content. The DI
-persists.
-
-This is a falsifiable claim about the patent, on synthetic data, with
-the patent's own mitigation step applied as written. Replication
-welcome.
 
 #### Sample mitigator output
 
