@@ -1,0 +1,99 @@
+{
+  "corpus_path": "synthetic/data/ps_corpus_mvp.jsonl",
+  "embedding_model": "all-MiniLM-L6-v2",
+  "n_documents": 192,
+  "overall": {
+    "within_seed_within_stratum": {
+      "n": 96,
+      "mean": 0.20851989090442657,
+      "median": 0.1972741186618805,
+      "p10": 0.13848108053207397,
+      "p90": 0.27848705649375916
+    },
+    "within_seed_across_stratum": {
+      "n": 4416,
+      "mean": 0.25255149602890015,
+      "median": 0.2413654923439026,
+      "p10": 0.1819746494293213,
+      "p90": 0.32601866126060486
+    },
+    "across_seed": {
+      "n": 13824,
+      "mean": 0.41055023670196533,
+      "median": 0.4051680564880371,
+      "p10": 0.30332687497138977,
+      "p90": 0.522870659828186
+    }
+  },
+  "per_seed": {
+    "control_neutral": {
+      "within_stratum": {
+        "n": 24,
+        "mean": 0.21221153438091278,
+        "median": 0.17760935425758362,
+        "p10": 0.13486424088478088,
+        "p90": 0.2621321380138397
+      },
+      "across_stratum": {
+        "n": 1104,
+        "mean": 0.2512006163597107,
+        "median": 0.22766244411468506,
+        "p10": 0.17544463276863098,
+        "p90": 0.30674096941947937
+      }
+    },
+    "poverty_signal": {
+      "within_stratum": {
+        "n": 24,
+        "mean": 0.20972628891468048,
+        "median": 0.19845104217529297,
+        "p10": 0.16135744750499725,
+        "p90": 0.2746998965740204
+      },
+      "across_stratum": {
+        "n": 1104,
+        "mean": 0.2671371102333069,
+        "median": 0.25957831740379333,
+        "p10": 0.19171307981014252,
+        "p90": 0.3541010618209839
+      }
+    },
+    "illness_signal": {
+      "within_stratum": {
+        "n": 24,
+        "mean": 0.24006569385528564,
+        "median": 0.2304929792881012,
+        "p10": 0.16581977903842926,
+        "p90": 0.32344672083854675
+      },
+      "across_stratum": {
+        "n": 1104,
+        "mean": 0.2651710510253906,
+        "median": 0.2614976465702057,
+        "p10": 0.19604668021202087,
+        "p90": 0.3394090235233307
+      }
+    },
+    "immigration_signal": {
+      "within_stratum": {
+        "n": 24,
+        "mean": 0.1720760315656662,
+        "median": 0.1788042187690735,
+        "p10": 0.12061353027820587,
+        "p90": 0.21290439367294312
+      },
+      "across_stratum": {
+        "n": 1104,
+        "mean": 0.22669723629951477,
+        "median": 0.22543981671333313,
+        "p10": 0.17597781121730804,
+        "p90": 0.2821825444698334
+      }
+    }
+  },
+  "decision": {
+    "content_holds_constant_within_seed": true,
+    "ratio_within_seed_across_stratum_to_across_seed": 0.6151536972861065,
+    "interpretation": "Content holds constant within seed; demographic-marker embedding drift is smaller than seed-level content drift."
+  }
+}

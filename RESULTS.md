@@ -1,176 +1,129 @@
 # Example Results
 
-This file documents two bodies of work produced with this toolkit:
+This file documents output produced by running the toolkit's CLI tools
+on (a) a 192-personal-statement stratified synthetic corpus and (b)
+illustrative narrative-tone anchorings. All numbers are reference
+output from running the tools, not findings about any deployed AEDT.
+Specific values vary across runs.
 
-1. Headline MSPE-anchored findings (December 2025 – January 2026) on a
-   single MSPE document. Reproducible via the toolkit's CLI templates
-   (`tools/run_paragraph_audit.py`, `tools/run_dilution_test.py`,
-   `tools/run_screening_simulation.py`) on any document a user supplies.
-2. Synthetic-corpus audits (May 2026) on a 192-PS stratified corpus
-   exercising the patent's Personal Statement Component (col. 10) and
-   the Claim 1 Bias Mitigator.
+Two posture sections follow:
 
-These are not findings about any deployed AEDT. They are reference
-numbers showing the kind of output the toolkit produces when run
-end-to-end. Run on your own corpus and compare.
+- **Toolkit reference output on illustrative anchorings** —
+  multi-instrument and multi-architecture sensitivity demonstrations.
+  Anchorings are labeled `instrument_a/b/c/d` to keep the methodology
+  generic; replace with values from your own sentiment instruments
+  when running on your own document.
+- **Synthetic-corpus audits** — Audits 1 and 2 plus content-equivalence
+  and counterfactual decomposition diagnostics on the 192-PS stratified
+  corpus.
 
 ---
 
-## Part 1 — Headline MSPE findings (December 2025 – January 2026)
+## Toolkit reference output (illustrative anchorings)
 
-Anchor document: a single 3,245-word MSPE produced by an accredited U.S.
-medical school, describing approved medical leaves of absence in AAMC
-template language ("voluntary," "personal reasons"). The actual MSPE is
-gitignored; only aggregate scores are public.
+These tables show the kind of output the toolkit produces when run on
+four illustrative sentiment-instrument anchorings (a lexicon-class
+tool, a transformer-class tool, two LLM-judge variants). The actual
+anchoring values are in
+[`examples/screening_anchorings_template.json`](examples/screening_anchorings_template.json).
 
-### A. Four-instrument excerpt-level sentiment gap
+### A. Per-section paragraph audit (multi-instrument)
 
-| Instrument | Original wording | Recovery-affirming counterfactual | Gap |
+`tools/run_paragraph_audit.py` scores a sectioned document under
+multiple sentiment instruments. The architectural signal a
+section-aware extraction pipeline would surface is when one section is
+the lowest-scoring section under every instrument simultaneously.
+Example output on a generic medical-school evaluation skeleton with a
+single low-tone leave-of-absence paragraph: the leave-of-absence
+section is rank-lowest under both the VADER lexicon (+0.18 vs +0.55+
+elsewhere) and a RoBERTa transformer (+0.04 vs +0.85+ elsewhere). LLM
+judges produce similar rank-ordering on the same input.
+
+### B. Excerpt vs full-document scoring (dilution test)
+
+`tools/run_dilution_test.py` compares a low-tone variant against a
+high-tone variant of the same content, scored as a standalone excerpt
+and as a paragraph embedded in a longer skeleton document. The score
+gap typically dilutes to near zero when the variant is buried in a
+long surrounding document under lexicon and transformer scoring;
+LLM-judge instruments retain more of the gap.
+
+| Instrument class | Excerpt-level gap | Full-document gap | % dilution |
 |---|---:|---:|---:|
-| VADER (lexicon) | +0.18 | +0.78 | +0.60 |
-| RoBERTa (transformer) | +0.02 | +0.23 | +0.22 |
-| Claude (LLM judge) | -0.40 | +0.55 | +0.95 |
-| GPT-5 (LLM judge) | -0.22 | +0.55 | +0.77 |
+| Lexicon-class (e.g., VADER) | ~+0.6 | ~0.0 | ~100% |
+| Transformer-class (e.g., RoBERTa-sentiment) | ~+0.2 | ~0.0 | ~100% |
+| LLM-judge variant A | ~+0.95 | ~+0.16 | ~83% |
+| LLM-judge variant B | ~+0.77 | ~+0.05 | ~94% |
 
-Same dates, same diagnoses, same outcomes; wording differs. Every
-instrument detects the gap. The most sophisticated instruments detect
-the largest ones.
+Pattern: lexicon and transformer instruments fully dilute under
+whole-document scoring; LLM judges retain the gap.
 
-### B. Per-section paragraph-by-paragraph audit
+### C. Screening simulation under multiple sentiment anchorings
 
-13 substantive sections of the MSPE (≥50 words), scored independently
-under the four instruments. The leave-of-absence-containing
-"ACADEMIC HISTORY" section is rank-lowest under every instrument:
-RoBERTa and GPT-5 score it net negative, Claude zero, VADER +0.42.
-The next-lowest substantive section sits at +0.55 or above on all four
-scales. Four instruments, no awareness of each other or the case,
-unanimous.
+`tools/run_screening_simulation.py` and
+`tools/run_screening_with_counterfactual.py` take a JSON of sentiment
+anchorings (one per instrument class), generate stratified synthetic
+applicants, fit a screening model, top-K-select, and bootstrap
+disparate-impact CIs. The counterfactual variant adds a sentiment-only
+intervention: replace the disadvantaged group's narrative-tone score
+with the high-anchoring distribution and re-rank under the same
+trained model.
 
-The CLI template for this audit is `tools/run_paragraph_audit.py`:
+Across the four illustrative anchorings, baseline DI sits at
+EEOC-failing levels under every scoring method tested (linear,
+logistic regression, patent §530 power-of-2 aggregation,
+power-of-3 aggregation). Under the sentiment-only counterfactual, DI
+recovers to within ±0.05 of parity in every cell. The patent §530
+power-of-N aggregation amplifies, rather than mitigates, the baseline
+disparity vs. linear scoring on the same anchorings.
 
-```bash
-python -m tools.run_paragraph_audit \
-    --document /path/to/document.txt \
-    --instruments vader transformer llm \
-    --llm-provider openai --llm-model gpt-5-mini \
-    --out out/paragraph_audit/scores.json
-```
+### D. Disclosure-rate sweep
 
-Reports per-section scores per instrument and flags any section that
-is rank-lowest unanimously across all instruments — the architectural
-signal that section-aware extraction would surface.
+`tools/run_disclosure_sweep.py` varies the fraction of disadvantaged-
+group applicants whose narrative is overridden with the high-
+sentiment distribution (the "vendor protected-class control" trigger
+rate) and reports DI at each rate.
 
-### C. Top-quantile screening simulation, n=6,000
+Pattern across illustrative anchorings: DI is approximately linear in
+disclosure rate. At realistic protected-class disclosure rates (5–15%
+in many medical-education settings), DI sits well below the 0.80
+EEOC threshold. The threshold typically crosses around 75–90%
+disclosure depending on the anchoring's gap magnitude.
 
-Stratified synthetic applicants under the four-instrument-anchored
-sentiment gap, every other applicant feature held constant, top-K
-selection at the 12% invite rate.
-
-| Metric | Value |
-|---|---:|
-| Disparate impact (group_0 / group_1) | **0.019** |
-| Statistical parity difference | -0.235 |
-| Equal opportunity difference | -0.267 |
-| False positive rate difference | -0.157 |
-| EEOC 4/5 threshold | 0.80 |
-| Multiple of failure | **42×** |
-
-Sentiment-only counterfactual at fixed threshold: **DI ≈ 1.000**
-(parity within sampling noise). 23% of disadvantaged-group applicants
-who were rejected at baseline cross the algorithmic bar with wording
-substitution alone.
-
-### D. Eight-anchoring architectural sensitivity sweep
-
-DI under eight production-plausible scoring architectures (excerpt vs.
-whole-document × four instruments). Range: **0.000–0.436**. The
-strongest finding (DI = 0.019) is excerpt-level under section-aware
-extraction. The weakest finding (DI = 0.436, 95% CI [0.263, 0.658]) is
-whole-document Claude on a synthetic MSPE skeleton — and still fails
-EEOC 4/5 at point estimate.
-
-### E. Dilution from excerpt-level to full-document scoring
-
-| Instrument | Excerpt gap | Full-document gap | % dilution |
-|---|---:|---:|---:|
-| VADER | +0.60 | 0.00 | 100% |
-| RoBERTa | +0.22 | 0.00 | 100% |
-| Claude | +0.95 | +0.16 | 83% |
-| GPT-5 | +0.77 | +0.05 | 94% |
-
-VADER and RoBERTa fully dilute; the gap survives whole-document scoring
-under both LLM judges — the architecture class Thalamus's published
-materials describe for Cortex's AI features.
-
-### F. Disclosure-rate sweep
-
-Disparate impact as a function of the rate at which the
-disadvantaged-group MSPE uses ADA/504-protected language a vendor
-control would trigger on.
-
-| Disclosure rate | DI | Status |
+| Disclosure rate | DI (lexicon-class anchoring) | DI status |
 |---:|---:|---|
-| 5% | 0.067 | Fails 4/5 by 12× |
-| 10% | 0.119 | Fails 4/5 by 7× |
-| 25% | 0.243 | Fails 4/5 |
-| 50% | 0.479 | Fails 4/5 |
-| 75% | 0.701 | Fails 4/5 |
-| 90% | 0.844 | Mostly passes |
-| 100% | 0.922 | Passes |
-
-DI is approximately linear in disclosure rate; the four-fifths threshold
-crosses at ~85% disclosure. Realistic disclosure rates among medical
-students with ADA-protected conditions are 5–15%. At that range, DI
-sits between 0.067 and 0.119 — failing four-fifths by a factor of 7 to
-12, regardless of any vendor protected-class control.
-
-### Reproducing the screening simulation (code template)
-
-The simulation harness is `tools/run_screening_simulation.py`; the input
-template is `examples/screening_anchorings_template.json`. Users supply
-their own per-instrument sentiment anchorings; the harness generates
-synthetic applicants, fits a screening model, top-K selects, and reports
-DI with bootstrap CIs.
-
-```bash
-python -m tools.run_screening_simulation \
-    --anchorings examples/screening_anchorings_template.json \
-    --out-dir out/screening_simulation \
-    --n 6000 --invite-rate 0.30 --bootstrap-reps 1000
-```
-
-The dilution test harness is `tools/run_dilution_test.py`; the input
-template is `examples/dilution_test_template.json`, with a generic
-MSPE-style skeleton at `examples/mspe_skeleton_template.txt`.
-
-```bash
-python -m tools.run_dilution_test \
-    --config examples/dilution_test_template.json \
-    --out-dir out/dilution_test
-```
-
-Numerical results will not match exactly — sampling is stochastic,
-synthetic populations differ, vendor architectures evolve. The stable
-patterns: (1) sentiment gaps survive whole-document scoring under LLM
-judges and dilute under VADER/RoBERTa, (2) realistic protected-class
-disclosure rates leave most disadvantaged-group applicants unprotected
-by any vendor control, (3) excerpt-anchored DI under section-aware
-extraction sits orders of magnitude below 4/5.
+| 0% | ~0.10 | fails 4/5 by ~8× |
+| 5% | ~0.15 | fails 4/5 by ~5× |
+| 10% | ~0.19 | fails 4/5 by ~4× |
+| 25% | ~0.34 | fails 4/5 |
+| 50% | ~0.58 | fails 4/5 |
+| 75% | ~0.78 | borderline |
+| 90% | ~0.91 | passes |
+| 100% | ~0.97 | passes |
 
 ---
 
-## Part 2 — Synthetic-corpus audits (May 2026)
+## Synthetic-corpus audits
 
-Source artifacts (paths relative to repo root):
+Source artifacts. The `examples/reference_outputs/` paths are
+committed reference output sets; running the tools yourself writes
+fresh JSON + PNG/PDF figures to user-supplied `--out-dir` paths.
 
-| Artifact | Path |
+| Artifact | Reference output path |
 |---|---|
 | Corpus generator | `tools/generate_ps_corpus.py` |
-| Audit 1 (VADER + Claim 1 mitigator) | `out/audit_1/audit_1_reps1000.json` |
-| Audit 2 SBERT | `out/audit_2/audit_2_results_sbert_reps1000.json` |
-| Audit 2 LLM (gpt-5-mini) | `out/audit_2/audit_2_results_llm_reps1000.json` |
-| Content equivalence | `out/content_equivalence/results.json` |
-| Counterfactual decomposition | `out/counterfactual/counterfactual_decomposition.json` |
+| Audit 1 (VADER + Claim 1 mitigator) | `examples/reference_outputs/audit_1/audit_1_reps1000.json` |
+| Audit 2 SBERT | `examples/reference_outputs/audit_2/audit_2_results_sbert_reps1000.json` |
+| Audit 2 LLM (small open-weights or LLM-judge model) | `examples/reference_outputs/audit_2/audit_2_results_llm_reps1000.json` |
+| Content equivalence | `examples/reference_outputs/content_equivalence/results.json` |
+| Counterfactual decomposition | `examples/reference_outputs/counterfactual/counterfactual_decomposition.json` |
+| Screening with counterfactual (multi-model) | `examples/reference_outputs/screening_counterfactual/results_multimodel.json` |
+| Dilution test | `examples/reference_outputs/dilution_test/dilution_test_results.json` |
+| Disclosure-rate sweep | `examples/reference_outputs/disclosure_sweep/results.json` |
+| Paragraph audit | `examples/reference_outputs/paragraph_audit/scores.json` |
+
+Each directory also contains the rendered figure (`.png` and `.pdf`)
+produced by the corresponding `plots/plot_*.py` script.
 
 Corpus: 192 PSs across 4 content seeds × 4 races × 2 genders × 3 school
 tiers × 2 instances. Generated with `tools.generate_ps_corpus` using
@@ -256,7 +209,7 @@ The axis depends on architectural choices the patent does not specify.
 
 ---
 
-## Part 3 — Validation
+## Validation
 
 ### Content equivalence
 

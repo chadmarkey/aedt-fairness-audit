@@ -1,0 +1,56 @@
+{
+  "document_path": "/tmp/example_doc_for_paragraph_audit.txt",
+  "n_sections": 6,
+  "min_words_to_score": 20,
+  "instruments": [
+    "vader",
+    "transformer"
+  ],
+  "sections": [
+    {
+      "label": "EVALUATION",
+      "word_count": 16,
+      "scored": false
+    },
+    {
+      "label": "ACADEMIC HISTORY",
+      "word_count": 20,
+      "scored": true,
+      "vader": 0.886,
+      "transformer": 0.9342839042656124
+    },
+    {
+      "label": "LEAVES OF ABSENCE AND SCHEDULING",
+      "word_count": 28,
+      "scored": true,
+      "vader": 0.1779,
+      "transformer": -0.03891166299581528
+    },
+    {
+      "label": "CLERKSHIP PERFORMANCE",
+      "word_count": 32,
+      "scored": true,
+      "vader": 0.7845,
+      "transformer": 0.8654557149857283
+    },
+    {
+      "label": "NOTEWORTHY CHARACTERISTICS",
+      "word_count": 31,
+      "scored": true,
+      "vader": 0.8974,
+      "transformer": 0.9281885968521237
+    },
+    {
+      "label": "SUMMARY STATEMENT",
+      "word_count": 30,
+      "scored": true,
+      "vader": 0.8225,
+      "transformer": 0.8786175861023366
+    }
+  ],
+  "rank_lowest_per_instrument": {
+    "vader": "LEAVES OF ABSENCE AND SCHEDULING",
+    "transformer": "LEAVES OF ABSENCE AND SCHEDULING"
+  },
+  "rank_lowest_unanimous": true
+}

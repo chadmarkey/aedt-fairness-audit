@@ -1,0 +1,146 @@
+{
+  "vader": {
+    "scores": {
+      "baseline_low_sentiment": {
+        "excerpt": {
+          "neg": 0.118,
+          "neu": 0.882,
+          "pos": 0.0,
+          "compound": -0.0516
+        },
+        "full_doc": {
+          "neg": 0.009,
+          "neu": 0.865,
+          "pos": 0.126,
+          "compound": 0.9988
+        }
+      },
+      "baseline_high_sentiment": {
+        "excerpt": {
+          "neg": 0.146,
+          "neu": 0.854,
+          "pos": 0.0,
+          "compound": -0.0516
+        },
+        "full_doc": {
+          "neg": 0.009,
+          "neu": 0.865,
+          "pos": 0.126,
+          "compound": 0.9988
+        }
+      },
+      "extended_low_sentiment": {
+        "excerpt": {
+          "neg": 0.0,
+          "neu": 0.925,
+          "pos": 0.075,
+          "compound": 0.1779
+        },
+        "full_doc": {
+          "neg": 0.008,
+          "neu": 0.866,
+          "pos": 0.126,
+          "compound": 0.9988
+        }
+      },
+      "extended_high_sentiment": {
+        "excerpt": {
+          "neg": 0.033,
+          "neu": 0.844,
+          "pos": 0.123,
+          "compound": 0.7783
+        },
+        "full_doc": {
+          "neg": 0.01,
+          "neu": 0.863,
+          "pos": 0.127,
+          "compound": 0.9989
+        }
+      }
+    },
+    "gaps": {
+      "baseline_high_sentiment \u2212 baseline_low_sentiment": {
+        "excerpt_gap": 0.0,
+        "full_doc_gap": 0.0,
+        "dilution_ratio": NaN
+      },
+      "extended_high_sentiment \u2212 extended_low_sentiment": {
+        "excerpt_gap": 0.6004,
+        "full_doc_gap": 9.999999999998899e-05,
+        "dilution_ratio": 0.00016655562958026147
+      }
+    }
+  },
+  "transformer": {
+    "scores": {
+      "baseline_low_sentiment": {
+        "excerpt": {
+          "neg": 0.227728471159935,
+          "neu": 0.7567815780639648,
+          "pos": 0.015489992685616016,
+          "compound": -0.21223847847431898
+        },
+        "full_doc": {
+          "neg": 0.016576159745454788,
+          "neu": 0.7984522581100464,
+          "pos": 0.18497149646282196,
+          "compound": 0.16839533671736717
+        }
+      },
+      "baseline_high_sentiment": {
+        "excerpt": {
+          "neg": 0.07578535377979279,
+          "neu": 0.9017981886863708,
+          "pos": 0.022416457533836365,
+          "compound": -0.05336889624595642
+        },
+        "full_doc": {
+          "neg": 0.016576159745454788,
+          "neu": 0.7984522581100464,
+          "pos": 0.18497149646282196,
+          "compound": 0.16839533671736717
+        }
+      },
+      "extended_low_sentiment": {
+        "excerpt": {
+          "neg": 0.08006565272808075,
+          "neu": 0.8888843655586243,
+          "pos": 0.03104996122419834,
+          "compound": -0.04901569150388241
+        },
+        "full_doc": {
+          "neg": 0.016576159745454788,
+          "neu": 0.7984522581100464,
+          "pos": 0.18497149646282196,
+          "compound": 0.16839533671736717
+        }
+      },
+      "extended_high_sentiment": {
+        "excerpt": {
+          "neg": 0.022534238174557686,
+          "neu": 0.7221518158912659,
+          "pos": 0.2553139328956604,
+          "compound": 0.23277969472110271
+        },
+        "full_doc": {
+          "neg": 0.016576159745454788,
+          "neu": 0.7984522581100464,
+          "pos": 0.18497149646282196,
+          "compound": 0.16839533671736717
+        }
+      }
+    },
+    "gaps": {
+      "baseline_high_sentiment \u2212 baseline_low_sentiment": {
+        "excerpt_gap": 0.15886958222836256,
+        "full_doc_gap": 0.0,
+        "dilution_ratio": 0.0
+      },
+      "extended_high_sentiment \u2212 extended_low_sentiment": {
+        "excerpt_gap": 0.2817953862249851,
+        "full_doc_gap": 0.0,
+        "dilution_ratio": 0.0
+      }
+    }
+  }
+}

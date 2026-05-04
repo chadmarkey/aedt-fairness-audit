@@ -12,12 +12,11 @@ and model.
 Usage:
     # With Anthropic Claude (default):
     ANTHROPIC_API_KEY=sk-ant-... python -m tools.generate_ps_corpus \\
-        --out synthetic/data/ps_corpus_mvp.jsonl
+        --out synthetic/data/ps_corpus.jsonl
 
-    # With OpenAI / Dartmouth-compatible endpoint:
-    OPENAI_API_KEY=... OPENAI_BASE_URL=https://chat.dartmouth.edu/v1 \\
-    OPENAI_MODEL=gpt-4o python -m tools.generate_ps_corpus \\
-        --out synthetic/data/ps_corpus_mvp.jsonl --provider openai
+    # With OpenAI (or any OpenAI-compatible endpoint via OPENAI_BASE_URL):
+    OPENAI_API_KEY=... OPENAI_MODEL=gpt-4o python -m tools.generate_ps_corpus \\
+        --out synthetic/data/ps_corpus.jsonl --provider openai
 
     # Smaller MVP run (8 PSs total — for smoke-test):
     python -m tools.generate_ps_corpus --out test.jsonl \\

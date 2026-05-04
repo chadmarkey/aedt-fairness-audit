@@ -217,8 +217,21 @@ class LLMPSExtractor:
         content = self._call_llm(prompt)
         scores = _parse_response(content)
 
-        # Patent §530: raise per-indicator scores to power-2 for aggregation
+        # Patent §530: raise per-indicator scores to power-2 for aggregation.
+        # Parse failures (NaN) are coerced to 0.0 to avoid NaN propagation
+        # through the aggregate; emit a one-line warning so silent
+        # corruption is at least visible in the run log.
         per_q = np.array([scores[k] for k in PATENT_QUESTIONS], dtype=float)
+        if np.any(np.isnan(per_q)):
+            import warnings
+            n_nan = int(np.sum(np.isnan(per_q)))
+            warnings.warn(
+                f"LLMPSExtractor: {n_nan}/{len(PATENT_QUESTIONS)} question "
+                "scores failed to parse; treating as 0.0 (no evidence) for "
+                "aggregation.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
         per_q_powered = np.power(np.nan_to_num(per_q, nan=0.0), self.aggregate_power)
         scores["_total"] = float(per_q_powered.sum())
         return scores

@@ -29,19 +29,21 @@ ratio below 0.80, or above 1.25 in the reverse direction).
 
 These are example numbers from a single run on 192 synthetic personal
 statements covering 24 demographic combinations. Specific values vary
-across runs; the patterns are what to expect.
+across runs; the patterns below are what to expect.
 
 - The patent's personal-statement extractor produced selection-rate
-  ratios of 0.51–0.66 across demographic groups on three of four
-  questions — outside the four-fifths range.
+  ratios in the range 0.50–0.59 across demographic groups on three of
+  four questions — outside the four-fifths range.
 - Running the patent's own bias-removal step, which deletes names,
   schools, and other demographic identifiers, did not close the gap.
   The ratios stayed within ±0.09 of their pre-removal values.
-- A simulated 6,000-applicant screen using sentiment scores from real
-  text produced selection-rate ratios between 0.00 and 0.45 across
-  four sentiment instruments — all outside the four-fifths range.
-  When narrative sentiment alone was held constant across groups, the
-  ratios returned to approximately 1.0.
+- The screening-simulation tool, run on illustrative sentiment
+  anchorings, produced selection-rate ratios well below the
+  four-fifths threshold under every scoring method tested (linear,
+  logistic regression, patent §530 power-of-2 aggregation,
+  power-of-3 aggregation). When narrative sentiment alone was held
+  constant across groups in a sentiment-only counterfactual, the
+  ratios returned to within sampling noise of parity.
 
 The technical results, with confidence intervals and methodology, are
 in [`RESULTS.md`](RESULTS.md). The audit code is in `tools/`. The

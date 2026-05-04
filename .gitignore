@@ -62,6 +62,12 @@ audit_1_results*.json
 audit_2_results*.json
 audit_*_per_applicant_scores*.csv
 
+# But keep the committed reference-output snapshot (under
+# examples/reference_outputs/) so users can diff their own runs against
+# a known-good set of figures and metric files.
+!examples/reference_outputs/
+!examples/reference_outputs/**
+
 # Real applicant data (defense in depth)
 *REAL_*.txt
 *REAL_*.md

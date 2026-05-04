@@ -1,9 +1,9 @@
 """LLM-as-judge sentiment scoring.
 
-Asks an LLM (Anthropic Claude or OpenAI/Dartmouth-compatible) to rate the
-narrative tone of a text on a continuous [-1, 1] scale. The prompt
-explicitly frames the task as scoring narrative tone, not the
-underlying applicant's quality, so the score is comparable to a
+Asks an LLM (Anthropic Claude or OpenAI / OpenAI-compatible endpoint)
+to rate the narrative tone of a text on a continuous [-1, 1] scale.
+The prompt explicitly frames the task as scoring narrative tone, not
+the underlying applicant's quality, so the score is comparable to a
 sentiment-pipeline output rather than a hiring recommendation.
 
 Compound score is the LLM's float in [-1, 1].
@@ -72,7 +72,7 @@ def score_openai(
     model: Optional[str] = None,
     base_url: Optional[str] = None,
 ) -> Dict[str, float]:
-    """Score with OpenAI (or OpenAI-compatible endpoint, e.g., Dartmouth).
+    """Score with OpenAI (or any OpenAI-compatible endpoint).
 
     Requires OPENAI_API_KEY env var; optional OPENAI_BASE_URL for
     alternative endpoints. Handles reasoning models (gpt-5*, o1*, o3*)

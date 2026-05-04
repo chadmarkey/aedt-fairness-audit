@@ -1,0 +1,499 @@
+{
+  "audit": "counterfactual_decomposition_marker_stripped",
+  "corpus_path": "synthetic/data/ps_corpus_mvp.jsonl",
+  "original_scores_path": "out/audit_2/audit_2_per_applicant_scores_llm.csv",
+  "n_applicants": 192,
+  "top_frac": 0.3,
+  "bootstrap_reps": 1000,
+  "extractor": {
+    "provider": "openai",
+    "model": "gpt-5-mini"
+  },
+  "decomposition": {
+    "poverty": {
+      "original": {
+        "gender": {
+          "axis": "gender",
+          "group_0_label": "Female",
+          "group_1_label": "Male",
+          "n_group0": 96,
+          "n_group1": 96,
+          "selection_rate_group0": 0.3020833333333333,
+          "selection_rate_group1": 0.3020833333333333,
+          "disparate_impact": 1.0,
+          "statistical_parity_difference": 0.0,
+          "bootstrap_di_point": 0.979381443298969,
+          "bootstrap_di_ci_lo": 0.6110817628022082,
+          "bootstrap_di_ci_hi": 1.5217562162053506,
+          "bootstrap_n_reps": 1000
+        },
+        "race": {
+          "axis": "race",
+          "group_0_label": "non-White",
+          "group_1_label": "White",
+          "n_group0": 144,
+          "n_group1": 48,
+          "selection_rate_group0": 0.2986111111111111,
+          "selection_rate_group1": 0.3125,
+          "disparate_impact": 0.9555555555555555,
+          "statistical_parity_difference": -0.013888888888888895,
+          "bootstrap_di_point": 1.029106029106029,
+          "bootstrap_di_ci_lo": 0.6403162055335968,
+          "bootstrap_di_ci_hi": 1.804309764309764,
+          "bootstrap_n_reps": 1000
+        },
+        "school_tier": {
+          "axis": "school_tier",
+          "group_0_label": "lower-resource",
+          "group_1_label": "top-tier",
+          "n_group0": 128,
+          "n_group1": 64,
+          "selection_rate_group0": 0.3046875,
+          "selection_rate_group1": 0.296875,
+          "disparate_impact": 1.0263157894736843,
+          "statistical_parity_difference": 0.0078125,
+          "bootstrap_di_point": 1.0183503267973855,
+          "bootstrap_di_ci_lo": 0.6596468191066801,
+          "bootstrap_di_ci_hi": 1.7005075187969922,
+          "bootstrap_n_reps": 1000
+        }
+      },
+      "stripped": {
+        "gender": {
+          "axis": "gender",
+          "group_0_label": "Female",
+          "group_1_label": "Male",
+          "n_group0": 96,
+          "n_group1": 96,
+          "selection_rate_group0": 0.2916666666666667,
+          "selection_rate_group1": 0.3125,
+          "disparate_impact": 0.9333333333333333,
+          "statistical_parity_difference": -0.020833333333333315,
+          "bootstrap_di_point": 0.9333333333333333,
+          "bootstrap_di_ci_lo": 0.5720823798627002,
+          "bootstrap_di_ci_hi": 1.4744125077401355,
+          "bootstrap_n_reps": 1000
+        },
+        "race": {
+          "axis": "race",
+          "group_0_label": "non-White",
+          "group_1_label": "White",
+          "n_group0": 144,
+          "n_group1": 48,
+          "selection_rate_group0": 0.3125,
+          "selection_rate_group1": 0.2708333333333333,
+          "disparate_impact": 1.153846153846154,
+          "statistical_parity_difference": 0.041666666666666685,
+          "bootstrap_di_point": 1.2330689444783403,
+          "bootstrap_di_ci_lo": 0.7382129351740696,
+          "bootstrap_di_ci_hi": 2.2955806817907276,
+          "bootstrap_n_reps": 1000
+        },
+        "school_tier": {
+          "axis": "school_tier",
+          "group_0_label": "lower-resource",
+          "group_1_label": "top-tier",
+          "n_group0": 128,
+          "n_group1": 64,
+          "selection_rate_group0": 0.3046875,
+          "selection_rate_group1": 0.296875,
+          "disparate_impact": 1.0263157894736843,
+          "statistical_parity_difference": 0.0078125,
+          "bootstrap_di_point": 1.0300803662047682,
+          "bootstrap_di_ci_lo": 0.6446511627906978,
+          "bootstrap_di_ci_hi": 1.8302158273381295,
+          "bootstrap_n_reps": 1000
+        }
+      }
+    },
+    "refugee": {
+      "original": {
+        "gender": {
+          "axis": "gender",
+          "group_0_label": "Female",
+          "group_1_label": "Male",
+          "n_group0": 96,
+          "n_group1": 96,
+          "selection_rate_group0": 0.3125,
+          "selection_rate_group1": 0.2916666666666667,
+          "disparate_impact": 1.0714285714285714,
+          "statistical_parity_difference": 0.020833333333333315,
+          "bootstrap_di_point": 1.035897435897436,
+          "bootstrap_di_ci_lo": 0.6683442481076752,
+          "bootstrap_di_ci_hi": 1.636806152259838,
+          "bootstrap_n_reps": 1000
+        },
+        "race": {
+          "axis": "race",
+          "group_0_label": "non-White",
+          "group_1_label": "White",
+          "n_group0": 144,
+          "n_group1": 48,
+          "selection_rate_group0": 0.24305555555555555,
+          "selection_rate_group1": 0.4791666666666667,
+          "disparate_impact": 0.5072463768115941,
+          "statistical_parity_difference": -0.23611111111111113,
+          "bootstrap_di_point": 0.9620991253644314,
+          "bootstrap_di_ci_lo": 0.6101805804437382,
+          "bootstrap_di_ci_hi": 1.6453030303030298,
+          "bootstrap_n_reps": 1000
+        },
+        "school_tier": {
+          "axis": "school_tier",
+          "group_0_label": "lower-resource",
+          "group_1_label": "top-tier",
+          "n_group0": 128,
+          "n_group1": 64,
+          "selection_rate_group0": 0.3046875,
+          "selection_rate_group1": 0.296875,
+          "disparate_impact": 1.0263157894736843,
+          "statistical_parity_difference": 0.0078125,
+          "bootstrap_di_point": 1.083076835385317,
+          "bootstrap_di_ci_lo": 0.6916928289102201,
+          "bootstrap_di_ci_hi": 1.7854636055208568,
+          "bootstrap_n_reps": 1000
+        }
+      },
+      "stripped": {
+        "gender": {
+          "axis": "gender",
+          "group_0_label": "Female",
+          "group_1_label": "Male",
+          "n_group0": 96,
+          "n_group1": 96,
+          "selection_rate_group0": 0.3125,
+          "selection_rate_group1": 0.2916666666666667,
+          "disparate_impact": 1.0714285714285714,
+          "statistical_parity_difference": 0.020833333333333315,
+          "bootstrap_di_point": 1.001453488372093,
+          "bootstrap_di_ci_lo": 0.6491043665693228,
+          "bootstrap_di_ci_hi": 1.5418160917058845,
+          "bootstrap_n_reps": 1000
+        },
+        "race": {
+          "axis": "race",
+          "group_0_label": "non-White",
+          "group_1_label": "White",
+          "n_group0": 144,
+          "n_group1": 48,
+          "selection_rate_group0": 0.25,
+          "selection_rate_group1": 0.4583333333333333,
+          "disparate_impact": 0.5454545454545455,
+          "statistical_parity_difference": -0.20833333333333331,
+          "bootstrap_di_point": 0.9902152641878668,
+          "bootstrap_di_ci_lo": 0.622176391683434,
+          "bootstrap_di_ci_hi": 1.6817112109744556,
+          "bootstrap_n_reps": 1000
+        },
+        "school_tier": {
+          "axis": "school_tier",
+          "group_0_label": "lower-resource",
+          "group_1_label": "top-tier",
+          "n_group0": 128,
+          "n_group1": 64,
+          "selection_rate_group0": 0.296875,
+          "selection_rate_group1": 0.3125,
+          "disparate_impact": 0.95,
+          "statistical_parity_difference": -0.015625,
+          "bootstrap_di_point": 1.0347752332485158,
+          "bootstrap_di_ci_lo": 0.6718403642192134,
+          "bootstrap_di_ci_hi": 1.6847106639839033,
+          "bootstrap_n_reps": 1000
+        }
+      }
+    },
+    "major_illness": {
+      "original": {
+        "gender": {
+          "axis": "gender",
+          "group_0_label": "Female",
+          "group_1_label": "Male",
+          "n_group0": 96,
+          "n_group1": 96,
+          "selection_rate_group0": 0.3229166666666667,
+          "selection_rate_group1": 0.28125,
+          "disparate_impact": 1.1481481481481481,
+          "statistical_parity_difference": 0.041666666666666685,
+          "bootstrap_di_point": 1.0351837747877353,
+          "bootstrap_di_ci_lo": 0.6824308211133239,
+          "bootstrap_di_ci_hi": 1.5537757437070938,
+          "bootstrap_n_reps": 1000
+        },
+        "race": {
+          "axis": "race",
+          "group_0_label": "non-White",
+          "group_1_label": "White",
+          "n_group0": 144,
+          "n_group1": 48,
+          "selection_rate_group0": 0.25,
+          "selection_rate_group1": 0.4583333333333333,
+          "disparate_impact": 0.5454545454545455,
+          "statistical_parity_difference": -0.20833333333333331,
+          "bootstrap_di_point": 0.9437340153452685,
+          "bootstrap_di_ci_lo": 0.5918762088974854,
+          "bootstrap_di_ci_hi": 1.6903128206324034,
+          "bootstrap_n_reps": 1000
+        },
+        "school_tier": {
+          "axis": "school_tier",
+          "group_0_label": "lower-resource",
+          "group_1_label": "top-tier",
+          "n_group0": 128,
+          "n_group1": 64,
+          "selection_rate_group0": 0.2890625,
+          "selection_rate_group1": 0.328125,
+          "disparate_impact": 0.8809523809523809,
+          "statistical_parity_difference": -0.0390625,
+          "bootstrap_di_point": 0.9388971684053651,
+          "bootstrap_di_ci_lo": 0.6114942528735632,
+          "bootstrap_di_ci_hi": 1.536533333333333,
+          "bootstrap_n_reps": 1000
+        }
+      },
+      "stripped": {
+        "gender": {
+          "axis": "gender",
+          "group_0_label": "Female",
+          "group_1_label": "Male",
+          "n_group0": 96,
+          "n_group1": 96,
+          "selection_rate_group0": 0.3229166666666667,
+          "selection_rate_group1": 0.28125,
+          "disparate_impact": 1.1481481481481481,
+          "statistical_parity_difference": 0.041666666666666685,
+          "bootstrap_di_point": 1.0,
+          "bootstrap_di_ci_lo": 0.6493943408452733,
+          "bootstrap_di_ci_hi": 1.4909714285714284,
+          "bootstrap_n_reps": 1000
+        },
+        "race": {
+          "axis": "race",
+          "group_0_label": "non-White",
+          "group_1_label": "White",
+          "n_group0": 144,
+          "n_group1": 48,
+          "selection_rate_group0": 0.2638888888888889,
+          "selection_rate_group1": 0.4166666666666667,
+          "disparate_impact": 0.6333333333333333,
+          "statistical_parity_difference": -0.1527777777777778,
+          "bootstrap_di_point": 1.0540707219124605,
+          "bootstrap_di_ci_lo": 0.6542292129541074,
+          "bootstrap_di_ci_hi": 1.8866687788626777,
+          "bootstrap_n_reps": 1000
+        },
+        "school_tier": {
+          "axis": "school_tier",
+          "group_0_label": "lower-resource",
+          "group_1_label": "top-tier",
+          "n_group0": 128,
+          "n_group1": 64,
+          "selection_rate_group0": 0.2890625,
+          "selection_rate_group1": 0.328125,
+          "disparate_impact": 0.8809523809523809,
+          "statistical_parity_difference": -0.0390625,
+          "bootstrap_di_point": 0.967216271957335,
+          "bootstrap_di_ci_lo": 0.6295172373081463,
+          "bootstrap_di_ci_hi": 1.535593784461153,
+          "bootstrap_n_reps": 1000
+        }
+      }
+    },
+    "academic_career": {
+      "original": {
+        "gender": {
+          "axis": "gender",
+          "group_0_label": "Female",
+          "group_1_label": "Male",
+          "n_group0": 96,
+          "n_group1": 96,
+          "selection_rate_group0": 0.3125,
+          "selection_rate_group1": 0.2916666666666667,
+          "disparate_impact": 1.0714285714285714,
+          "statistical_parity_difference": 0.020833333333333315,
+          "bootstrap_di_point": 0.9715099715099714,
+          "bootstrap_di_ci_lo": 0.62993762993763,
+          "bootstrap_di_ci_hi": 1.4909714285714284,
+          "bootstrap_n_reps": 1000
+        },
+        "race": {
+          "axis": "race",
+          "group_0_label": "non-White",
+          "group_1_label": "White",
+          "n_group0": 144,
+          "n_group1": 48,
+          "selection_rate_group0": 0.2569444444444444,
+          "selection_rate_group1": 0.4375,
+          "disparate_impact": 0.5873015873015872,
+          "statistical_parity_difference": -0.18055555555555558,
+          "bootstrap_di_point": 0.9109311740890688,
+          "bootstrap_di_ci_lo": 0.5918762088974854,
+          "bootstrap_di_ci_hi": 1.6447368421052633,
+          "bootstrap_n_reps": 1000
+        },
+        "school_tier": {
+          "axis": "school_tier",
+          "group_0_label": "lower-resource",
+          "group_1_label": "top-tier",
+          "n_group0": 128,
+          "n_group1": 64,
+          "selection_rate_group0": 0.296875,
+          "selection_rate_group1": 0.3125,
+          "disparate_impact": 0.95,
+          "statistical_parity_difference": -0.015625,
+          "bootstrap_di_point": 0.9330143540669857,
+          "bootstrap_di_ci_lo": 0.6131840796019901,
+          "bootstrap_di_ci_hi": 1.5061475409836065,
+          "bootstrap_n_reps": 1000
+        }
+      },
+      "stripped": {
+        "gender": {
+          "axis": "gender",
+          "group_0_label": "Female",
+          "group_1_label": "Male",
+          "n_group0": 96,
+          "n_group1": 96,
+          "selection_rate_group0": 0.3125,
+          "selection_rate_group1": 0.2916666666666667,
+          "disparate_impact": 1.0714285714285714,
+          "statistical_parity_difference": 0.020833333333333315,
+          "bootstrap_di_point": 0.96941511647394,
+          "bootstrap_di_ci_lo": 0.6369459607551227,
+          "bootstrap_di_ci_hi": 1.4769503546099292,
+          "bootstrap_n_reps": 1000
+        },
+        "race": {
+          "axis": "race",
+          "group_0_label": "non-White",
+          "group_1_label": "White",
+          "n_group0": 144,
+          "n_group1": 48,
+          "selection_rate_group0": 0.2569444444444444,
+          "selection_rate_group1": 0.4375,
+          "disparate_impact": 0.5873015873015872,
+          "statistical_parity_difference": -0.18055555555555558,
+          "bootstrap_di_point": 0.9172507022037442,
+          "bootstrap_di_ci_lo": 0.5873015873015872,
+          "bootstrap_di_ci_hi": 1.6447373021715128,
+          "bootstrap_n_reps": 1000
+        },
+        "school_tier": {
+          "axis": "school_tier",
+          "group_0_label": "lower-resource",
+          "group_1_label": "top-tier",
+          "n_group0": 128,
+          "n_group1": 64,
+          "selection_rate_group0": 0.296875,
+          "selection_rate_group1": 0.3125,
+          "disparate_impact": 0.95,
+          "statistical_parity_difference": -0.015625,
+          "bootstrap_di_point": 0.9413155918753168,
+          "bootstrap_di_ci_lo": 0.6134388456875288,
+          "bootstrap_di_ci_hi": 1.4989010989010991,
+          "bootstrap_n_reps": 1000
+        }
+      }
+    },
+    "_total": {
+      "original": {
+        "gender": {
+          "axis": "gender",
+          "group_0_label": "Female",
+          "group_1_label": "Male",
+          "n_group0": 96,
+          "n_group1": 96,
+          "selection_rate_group0": 0.3020833333333333,
+          "selection_rate_group1": 0.3020833333333333,
+          "disparate_impact": 1.0,
+          "statistical_parity_difference": 0.0,
+          "bootstrap_di_point": 1.0137823245240125,
+          "bootstrap_di_ci_lo": 0.6490762958648806,
+          "bootstrap_di_ci_hi": 1.5217562162053506,
+          "bootstrap_n_reps": 1000
+        },
+        "race": {
+          "axis": "race",
+          "group_0_label": "non-White",
+          "group_1_label": "White",
+          "n_group0": 144,
+          "n_group1": 48,
+          "selection_rate_group0": 0.2916666666666667,
+          "selection_rate_group1": 0.3333333333333333,
+          "disparate_impact": 0.8750000000000001,
+          "statistical_parity_difference": -0.04166666666666663,
+          "bootstrap_di_point": 0.9620991253644314,
+          "bootstrap_di_ci_lo": 0.6146673928966363,
+          "bootstrap_di_ci_hi": 1.6666666666666665,
+          "bootstrap_n_reps": 1000
+        },
+        "school_tier": {
+          "axis": "school_tier",
+          "group_0_label": "lower-resource",
+          "group_1_label": "top-tier",
+          "n_group0": 128,
+          "n_group1": 64,
+          "selection_rate_group0": 0.296875,
+          "selection_rate_group1": 0.3125,
+          "disparate_impact": 0.95,
+          "statistical_parity_difference": -0.015625,
+          "bootstrap_di_point": 0.9618573797678274,
+          "bootstrap_di_ci_lo": 0.601410934744268,
+          "bootstrap_di_ci_hi": 1.5714785214785214,
+          "bootstrap_n_reps": 1000
+        }
+      },
+      "stripped": {
+        "gender": {
+          "axis": "gender",
+          "group_0_label": "Female",
+          "group_1_label": "Male",
+          "n_group0": 96,
+          "n_group1": 96,
+          "selection_rate_group0": 0.28125,
+          "selection_rate_group1": 0.3229166666666667,
+          "disparate_impact": 0.8709677419354839,
+          "statistical_parity_difference": -0.041666666666666685,
+          "bootstrap_di_point": 0.9142024582835104,
+          "bootstrap_di_ci_lo": 0.5720823798627002,
+          "bootstrap_di_ci_hi": 1.429512516469038,
+          "bootstrap_n_reps": 1000
+        },
+        "race": {
+          "axis": "race",
+          "group_0_label": "non-White",
+          "group_1_label": "White",
+          "n_group0": 144,
+          "n_group1": 48,
+          "selection_rate_group0": 0.3194444444444444,
+          "selection_rate_group1": 0.25,
+          "disparate_impact": 1.2777777777777777,
+          "statistical_parity_difference": 0.06944444444444442,
+          "bootstrap_di_point": 1.222328244274809,
+          "bootstrap_di_ci_lo": 0.7424412094064949,
+          "bootstrap_di_ci_hi": 2.2303206997084546,
+          "bootstrap_n_reps": 1000
+        },
+        "school_tier": {
+          "axis": "school_tier",
+          "group_0_label": "lower-resource",
+          "group_1_label": "top-tier",
+          "n_group0": 128,
+          "n_group1": 64,
+          "selection_rate_group0": 0.3046875,
+          "selection_rate_group1": 0.296875,
+          "disparate_impact": 1.0263157894736843,
+          "statistical_parity_difference": 0.0078125,
+          "bootstrap_di_point": 1.0031338450591096,
+          "bootstrap_di_ci_lo": 0.6446877076411961,
+          "bootstrap_di_ci_hi": 1.6295603755445713,
+          "bootstrap_n_reps": 1000
+        }
+      }
+    }
+  },
+  "interpretation_thresholds": {
+    "marker_driven_if": "|DI(stripped) - 1.0| < 0.4 * |DI(orig) - 1.0|",
+    "content_driven_if": "|DI(stripped) - 1.0| > 0.7 * |DI(orig) - 1.0|",
+    "no_DI_to_explain_if": "|DI(orig) - 1.0| < 0.1"
+  }
+}

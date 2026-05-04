@@ -283,8 +283,11 @@ def train_and_screen(
     cfg: SimulationConfig,
     model_name: str = "logistic_regression",
 ):
+    # Use a derived seed for the train/test split so DGP-draw variation and
+    # split variation are independent across bootstrap reps; keeping them
+    # equal would correlate the two and bias CI width downward.
     train_df, test_df = train_test_split(
-        df, test_size=0.30, random_state=seed,
+        df, test_size=0.30, random_state=seed * 7919 + 1,
         stratify=df["group"].astype(str) + "_" + df["label"].astype(str),
     )
     X_train = train_df[cfg.feature_cols].to_numpy()

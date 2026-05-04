@@ -132,16 +132,14 @@ both consistent with the patent's allowed scope:
    permitted scoring metrics.
 
 2. **`LLMPSExtractor` (LLM, in `ps_extraction/llm_extractor.py`)** —
-   direct LLM question-answering. Defaults: `gpt-5-mini` (OpenAI),
-   `claude-haiku-4-5` (Anthropic). Patent col. 10 says "users can apply
-   NLP" without specifying the answering mechanism.
+   direct LLM question-answering. Defaults: `gpt-4o-mini` (OpenAI) or
+   `gpt-5-mini` if available; `claude-haiku-4-5` (Anthropic). Patent
+   col. 10 says "users can apply NLP" without specifying the answering
+   mechanism.
 
-Neither extractor is a claim about Cortex's deployed PS
-question-answering architecture, which is not publicly documented.
-Thalamus's published methodology materials document `gpt-5o-mini` (Azure
-OpenAI) for transcript normalization and a Halsted-derived model for
-the Academic Career Interest badge. Neither is the four-question PS
-extractor.
+Neither extractor is a claim about any specific deployed AEDT's PS
+question-answering architecture. Both are reasonable implementations
+consistent with the patent's allowed scope.
 
 ### SBERT extractor implementation choices
 
@@ -162,6 +160,18 @@ implementation is associated with 3–4 exemplar sentences anchoring the
 semantic neighborhood. The exemplar inventory is the implementer's
 choice; users may override via `question_exemplars` parameter to
 `PSExtractor`.
+
+### Exemplar aggregation: mean-pool vs max-over-exemplars
+
+When multiple exemplars are provided per question, this implementation
+mean-pools their embeddings into a single per-question centroid before
+cosine scoring (`extractor.py:74`). This is one reasonable choice; the
+alternative — taking the maximum cosine similarity across exemplars
+before the threshold gate — can yield higher recall when exemplars are
+spread across the semantic neighborhood. The patent does not specify
+the aggregation rule. Mean-pool is documented here as the implementer's
+choice; users running their own audits with a different aggregation
+should report it.
 
 ### Pipeline order (patent §518 → §520 → §522 → §524 → §526 → §528 → §530)
 

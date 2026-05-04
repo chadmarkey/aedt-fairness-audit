@@ -38,11 +38,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import numpy as np
 import pandas as pd
 
+from audit.bootstrap import percentile_ci
 from audit.screening_simulation import (
     SimulationConfig,
     generate_synthetic_applicants,
     train_and_screen,
-    _percentile_ci,
 )
 
 
@@ -95,9 +95,9 @@ def bootstrap_disclosure(
         sr0_vals.append(metrics["selection_rate_group0"])
         sr1_vals.append(metrics["selection_rate_group1"])
     return {
-        "baseline_disparate_impact": _percentile_ci(np.array(di_vals)),
-        "g0_selection_rate": _percentile_ci(np.array(sr0_vals)),
-        "g1_selection_rate": _percentile_ci(np.array(sr1_vals)),
+        "baseline_disparate_impact": percentile_ci(np.array(di_vals)),
+        "g0_selection_rate": percentile_ci(np.array(sr0_vals)),
+        "g1_selection_rate": percentile_ci(np.array(sr1_vals)),
     }
 
 
@@ -128,7 +128,7 @@ def main() -> int:
     mean_low = float(parts[1])
     mean_high = float(parts[2])
 
-    cfg = SimulationConfig()
+    cfg = SimulationConfig(sd=args.narrative_sd)
 
     print(f"Anchoring: {anchor_label} (low={mean_low}, high={mean_high})",
           file=sys.stderr)

@@ -1,0 +1,910 @@
+{
+  "n_per_replicate": 6000,
+  "invite_rate": 0.12,
+  "narrative_sd": 0.1,
+  "bootstrap_reps": 50,
+  "models": [
+    "logistic_regression",
+    "linear_score",
+    "quadratic_aggregation",
+    "cubic_aggregation"
+  ],
+  "results": [
+    {
+      "anchoring": {
+        "label": "instrument_a_lexicon",
+        "mean_low": 0.18,
+        "mean_high": 0.78
+      },
+      "model": "logistic_regression",
+      "stages": {
+        "baseline": {
+          "disparate_impact": {
+            "point": 0.021324213902572282,
+            "mean": 0.02400583518640561,
+            "ci_lo": 0.0,
+            "ci_hi": 0.059678992802722465,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.005005066459295309,
+            "mean": 0.005557910420815947,
+            "ci_lo": 0.0,
+            "ci_hi": 0.013312313654188397,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.23432461873638344,
+            "mean": 0.23392406227925958,
+            "ci_lo": 0.22393326039387307,
+            "ci_hi": 0.24088797146243698,
+            "n_reps": 50
+          }
+        },
+        "counterfactual": {
+          "disparate_impact": {
+            "point": 0.9966745787647298,
+            "mean": 0.9845756222621059,
+            "ci_lo": 0.8045434318417231,
+            "ci_hi": 1.1772363180453496,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.11979760284173291,
+            "mean": 0.11874043097380758,
+            "ci_lo": 0.1069933145672062,
+            "ci_hi": 0.12982471641746623,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.12019770476122033,
+            "mean": 0.12125273852339305,
+            "ci_lo": 0.11027930293186033,
+            "ci_hi": 0.1330166257469254,
+            "n_reps": 50
+          }
+        }
+      }
+    },
+    {
+      "anchoring": {
+        "label": "instrument_a_lexicon",
+        "mean_low": 0.18,
+        "mean_high": 0.78
+      },
+      "model": "linear_score",
+      "stages": {
+        "baseline": {
+          "disparate_impact": {
+            "point": 0.018700997716704422,
+            "mean": 0.01849214695428971,
+            "ci_lo": 0.004616940222601445,
+            "ci_hi": 0.03410969235674639,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.004424784175522965,
+            "mean": 0.004338099684709778,
+            "ci_lo": 0.0011070234154773948,
+            "ci_hi": 0.007849403168088886,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.23486973058168015,
+            "mean": 0.23514920624092933,
+            "ci_lo": 0.2302005016285552,
+            "ci_hi": 0.2408471635944001,
+            "n_reps": 50
+          }
+        },
+        "counterfactual": {
+          "disparate_impact": {
+            "point": 1.0003705381036685,
+            "mean": 0.9788021951004149,
+            "ci_lo": 0.8183388182807608,
+            "ci_hi": 1.1561831189941365,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.12002202643171805,
+            "mean": 0.11839961350830341,
+            "ci_lo": 0.10801228257552639,
+            "ci_hi": 0.1285543355514736,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.11997757847533633,
+            "mean": 0.12157878427652995,
+            "ci_lo": 0.11119437635583025,
+            "ci_hi": 0.13199018699460915,
+            "n_reps": 50
+          }
+        }
+      }
+    },
+    {
+      "anchoring": {
+        "label": "instrument_a_lexicon",
+        "mean_low": 0.18,
+        "mean_high": 0.78
+      },
+      "model": "quadratic_aggregation",
+      "stages": {
+        "baseline": {
+          "disparate_impact": {
+            "point": 0.0,
+            "mean": 0.0013015197364751646,
+            "ci_lo": 0.0,
+            "ci_hi": 0.0048051650158968135,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.0,
+            "mean": 0.00031090773355885295,
+            "ci_lo": 0.0,
+            "ci_hi": 0.0011295058213432305,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.23971073884213873,
+            "mean": 0.2391673552077478,
+            "ci_lo": 0.23365349813708675,
+            "ci_hi": 0.24364696328982044,
+            "n_reps": 50
+          }
+        },
+        "counterfactual": {
+          "disparate_impact": {
+            "point": 1.0190755267506992,
+            "mean": 1.0170023442758802,
+            "ci_lo": 0.8589685335072546,
+            "ci_hi": 1.2396837549593591,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.12114411579609818,
+            "mean": 0.12068076238027739,
+            "ci_lo": 0.11082214765100672,
+            "ci_hi": 0.1327285178406482,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.11887649981820386,
+            "mean": 0.11928192987717828,
+            "ci_lo": 0.10706626343881245,
+            "ci_hi": 0.12905059499746419,
+            "n_reps": 50
+          }
+        }
+      }
+    },
+    {
+      "anchoring": {
+        "label": "instrument_a_lexicon",
+        "mean_low": 0.18,
+        "mean_high": 0.78
+      },
+      "model": "cubic_aggregation",
+      "stages": {
+        "baseline": {
+          "disparate_impact": {
+            "point": 0.0,
+            "mean": 0.0012051866276737285,
+            "ci_lo": 0.0,
+            "ci_hi": 0.004765079531733949,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.0,
+            "mean": 0.00028828969048667533,
+            "ci_lo": 0.0,
+            "ci_hi": 0.0011247178329571105,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.23971073884213873,
+            "mean": 0.23918918314434331,
+            "ci_lo": 0.2335384751563791,
+            "ci_hi": 0.24364696328982044,
+            "n_reps": 50
+          }
+        },
+        "counterfactual": {
+          "disparate_impact": {
+            "point": 1.0236135102744361,
+            "mean": 1.0296194458743921,
+            "ci_lo": 0.8204066256729847,
+            "ci_hi": 1.276828100972908,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.1213963950122604,
+            "mean": 0.12134934886071441,
+            "ci_lo": 0.10808196758149569,
+            "ci_hi": 0.1344336883576999,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.11859634546345153,
+            "mean": 0.11861714112010038,
+            "ci_lo": 0.10533793216720046,
+            "ci_hi": 0.13177847090823086,
+            "n_reps": 50
+          }
+        }
+      }
+    },
+    {
+      "anchoring": {
+        "label": "instrument_b_transformer",
+        "mean_low": 0.02,
+        "mean_high": 0.23
+      },
+      "model": "logistic_regression",
+      "stages": {
+        "baseline": {
+          "disparate_impact": {
+            "point": 0.30282907926482255,
+            "mean": 0.31473681406495807,
+            "ci_lo": 0.15360732818240047,
+            "ci_hi": 0.4664523309422454,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.05562119503945885,
+            "mean": 0.05665705230270269,
+            "ci_lo": 0.03185209525282202,
+            "ci_hi": 0.07674610721285913,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.18398736836901172,
+            "mean": 0.18305237987627596,
+            "ci_lo": 0.16453554289933028,
+            "ci_hi": 0.20827643807666005,
+            "n_reps": 50
+          }
+        },
+        "counterfactual": {
+          "disparate_impact": {
+            "point": 0.9568743193012389,
+            "mean": 0.9756482124693413,
+            "ci_lo": 0.7641421174476918,
+            "ci_hi": 1.3754810681485499,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.11735246261685134,
+            "mean": 0.11784642196658121,
+            "ci_lo": 0.10390978753047718,
+            "ci_hi": 0.139043336683878,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.12264146294893352,
+            "mean": 0.1221360663890586,
+            "ci_lo": 0.1013318417376252,
+            "ci_hi": 0.13599713189964946,
+            "n_reps": 50
+          }
+        }
+      }
+    },
+    {
+      "anchoring": {
+        "label": "instrument_b_transformer",
+        "mean_low": 0.02,
+        "mean_high": 0.23
+      },
+      "model": "linear_score",
+      "stages": {
+        "baseline": {
+          "disparate_impact": {
+            "point": 0.3020205965617192,
+            "mean": 0.3077951655170224,
+            "ci_lo": 0.21737376448967938,
+            "ci_hi": 0.4147341672057605,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.055308751111244295,
+            "mean": 0.05610612910293506,
+            "ci_lo": 0.04304175350815181,
+            "ci_hi": 0.07060887595570592,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.18337835349008533,
+            "mean": 0.18361327728855736,
+            "ci_lo": 0.16880097467363583,
+            "ci_hi": 0.19800941548348922,
+            "n_reps": 50
+          }
+        },
+        "counterfactual": {
+          "disparate_impact": {
+            "point": 0.9470063439169802,
+            "mean": 0.9616951016484506,
+            "ci_lo": 0.7604340417220864,
+            "ci_hi": 1.3630100783874575,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.11668545659526494,
+            "mean": 0.11697752074009263,
+            "ci_lo": 0.10365726227795193,
+            "ci_hi": 0.13835050391937287,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.12322015334063527,
+            "mean": 0.12300096543396266,
+            "ci_lo": 0.1019018743109151,
+            "ci_hi": 0.1363546676532248,
+            "n_reps": 50
+          }
+        }
+      }
+    },
+    {
+      "anchoring": {
+        "label": "instrument_b_transformer",
+        "mean_low": 0.02,
+        "mean_high": 0.23
+      },
+      "model": "quadratic_aggregation",
+      "stages": {
+        "baseline": {
+          "disparate_impact": {
+            "point": 0.3965771642216538,
+            "mean": 0.39762065655500545,
+            "ci_lo": 0.3016925655306199,
+            "ci_hi": 0.4954102407707256,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.06818070079696358,
+            "mean": 0.06795178998872675,
+            "ci_lo": 0.055687327156443735,
+            "ci_hi": 0.07950595757953836,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.17193571567438004,
+            "mean": 0.17185511991416416,
+            "ci_lo": 0.16042371024863997,
+            "ci_hi": 0.1842592535623754,
+            "n_reps": 50
+          }
+        },
+        "counterfactual": {
+          "disparate_impact": {
+            "point": 0.9911528789853343,
+            "mean": 0.9896430960801164,
+            "ci_lo": 0.8067538042719532,
+            "ci_hi": 1.2279603226920728,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.11946917273912006,
+            "mean": 0.11896376375691857,
+            "ci_lo": 0.10718296279491833,
+            "ci_hi": 0.13238636725593247,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.12053586442704733,
+            "mean": 0.12103098319265636,
+            "ci_lo": 0.1078092625219622,
+            "ci_hi": 0.1328639162192159,
+            "n_reps": 50
+          }
+        }
+      }
+    },
+    {
+      "anchoring": {
+        "label": "instrument_b_transformer",
+        "mean_low": 0.02,
+        "mean_high": 0.23
+      },
+      "model": "cubic_aggregation",
+      "stages": {
+        "baseline": {
+          "disparate_impact": {
+            "point": 0.43909551533243163,
+            "mean": 0.4385901053151256,
+            "ci_lo": 0.33377393161952074,
+            "ci_hi": 0.5690816157456707,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.07306420182623173,
+            "mean": 0.07280633881070299,
+            "ci_lo": 0.06012242382619679,
+            "ci_hi": 0.08683440036513458,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.166482298854513,
+            "mean": 0.16701935161861953,
+            "ci_lo": 0.1525596346465126,
+            "ci_hi": 0.17980437698422466,
+            "n_reps": 50
+          }
+        },
+        "counterfactual": {
+          "disparate_impact": {
+            "point": 0.9565289210205454,
+            "mean": 0.9818995037894644,
+            "ci_lo": 0.8103651106847224,
+            "ci_hi": 1.2541746275020456,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.11732242565900533,
+            "mean": 0.11839364835484108,
+            "ci_lo": 0.10748490299370424,
+            "ci_hi": 0.13386211180124225,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.12265662397545987,
+            "mean": 0.12157225064871559,
+            "ci_lo": 0.10677588219448685,
+            "ci_hi": 0.13264335494478802,
+            "n_reps": 50
+          }
+        }
+      }
+    },
+    {
+      "anchoring": {
+        "label": "instrument_c_llm_judge",
+        "mean_low": -0.4,
+        "mean_high": 0.55
+      },
+      "model": "logistic_regression",
+      "stages": {
+        "baseline": {
+          "disparate_impact": {
+            "point": 0.0,
+            "mean": 0.0011287163528960833,
+            "ci_lo": 0.0,
+            "ci_hi": 0.009194523800992237,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.0,
+            "mean": 0.00026783912266051485,
+            "ci_lo": 0.0,
+            "ci_hi": 0.0022042378296735217,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.23960073926236186,
+            "mean": 0.2392286917450774,
+            "ci_lo": 0.2335544947121034,
+            "ci_hi": 0.24455834951804573,
+            "n_reps": 50
+          }
+        },
+        "counterfactual": {
+          "disparate_impact": {
+            "point": 0.9959337066406104,
+            "mean": 0.9756548034207428,
+            "ci_lo": 0.7845767414708176,
+            "ci_hi": 1.1861223246128276,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.11975396795570421,
+            "mean": 0.11805140605709535,
+            "ci_lo": 0.1055444342951433,
+            "ci_hi": 0.1301557259165068,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.12024291990701863,
+            "mean": 0.12191342022031053,
+            "ci_lo": 0.10973278786023745,
+            "ci_hi": 0.13452683778891777,
+            "n_reps": 50
+          }
+        }
+      }
+    },
+    {
+      "anchoring": {
+        "label": "instrument_c_llm_judge",
+        "mean_low": -0.4,
+        "mean_high": 0.55
+      },
+      "model": "linear_score",
+      "stages": {
+        "baseline": {
+          "disparate_impact": {
+            "point": 0.0,
+            "mean": 0.0005629198945053018,
+            "ci_lo": 0.0,
+            "ci_hi": 0.004774423385554547,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.0,
+            "mean": 0.00013390432073257771,
+            "ci_lo": 0.0,
+            "ci_hi": 0.001125833904385682,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.23986681465038845,
+            "mean": 0.23936148954322764,
+            "ci_lo": 0.2337990599294947,
+            "ci_hi": 0.24455834951804573,
+            "n_reps": 50
+          }
+        },
+        "counterfactual": {
+          "disparate_impact": {
+            "point": 0.974038687872879,
+            "mean": 0.9784763127345697,
+            "ci_lo": 0.7862402942574818,
+            "ci_hi": 1.1984219153111701,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.11840354767184036,
+            "mean": 0.1182626582176979,
+            "ci_lo": 0.1055384833378901,
+            "ci_hi": 0.13080297094471927,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.12155998837997482,
+            "mean": 0.12172454690451387,
+            "ci_lo": 0.109147188150891,
+            "ci_hi": 0.13427682113383368,
+            "n_reps": 50
+          }
+        }
+      }
+    },
+    {
+      "anchoring": {
+        "label": "instrument_c_llm_judge",
+        "mean_low": -0.4,
+        "mean_high": 0.55
+      },
+      "model": "quadratic_aggregation",
+      "stages": {
+        "baseline": {
+          "disparate_impact": {
+            "point": 0.00466152172787072,
+            "mean": 0.006002100773943627,
+            "ci_lo": 0.0,
+            "ci_hi": 0.017506998667736796,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.0011123484286067805,
+            "mean": 0.001423953894240584,
+            "ci_lo": 0.0,
+            "ci_hi": 0.0041609738228188965,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.23844051913999748,
+            "mean": 0.23807341827651668,
+            "ci_lo": 0.2331477615471051,
+            "ci_hi": 0.2439119703825586,
+            "n_reps": 50
+          }
+        },
+        "counterfactual": {
+          "disparate_impact": {
+            "point": 0.9827433131614128,
+            "mean": 0.9951942266494298,
+            "ci_lo": 0.7628838658470715,
+            "ci_hi": 1.179759422181221,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.1189550117414411,
+            "mean": 0.11921410728648806,
+            "ci_lo": 0.10387072786332122,
+            "ci_hi": 0.12982690187431092,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.12104390183746455,
+            "mean": 0.12072078605365709,
+            "ci_lo": 0.11005039193729002,
+            "ci_hi": 0.13620438416302677,
+            "n_reps": 50
+          }
+        }
+      }
+    },
+    {
+      "anchoring": {
+        "label": "instrument_c_llm_judge",
+        "mean_low": -0.4,
+        "mean_high": 0.55
+      },
+      "model": "cubic_aggregation",
+      "stages": {
+        "baseline": {
+          "disparate_impact": {
+            "point": 0.013975600077891254,
+            "mean": 0.012757457503568801,
+            "ci_lo": 0.001003239112280791,
+            "ci_hi": 0.024529974126145652,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.0033204460092171317,
+            "mean": 0.00300642127941022,
+            "ci_lo": 0.00024483133841131675,
+            "ci_hi": 0.005653235855898185,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.23690071525779732,
+            "mean": 0.2364998935773928,
+            "ci_lo": 0.23042498610127773,
+            "ci_hi": 0.24165352621234973,
+            "n_reps": 50
+          }
+        },
+        "counterfactual": {
+          "disparate_impact": {
+            "point": 0.9911601885434869,
+            "mean": 0.9999862100224246,
+            "ci_lo": 0.7923808181469499,
+            "ci_hi": 1.282759828989655,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.11946961131260922,
+            "mean": 0.11946207371695314,
+            "ci_lo": 0.10595201601155264,
+            "ci_hi": 0.1348240230307485,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.1205363148532907,
+            "mean": 0.12047982881307769,
+            "ci_lo": 0.10513257434366058,
+            "ci_hi": 0.13372037600953263,
+            "n_reps": 50
+          }
+        }
+      }
+    },
+    {
+      "anchoring": {
+        "label": "instrument_d_llm_judge_alternative",
+        "mean_low": -0.22,
+        "mean_high": 0.55
+      },
+      "model": "logistic_regression",
+      "stages": {
+        "baseline": {
+          "disparate_impact": {
+            "point": 0.004604908020034866,
+            "mean": 0.00651245278559476,
+            "ci_lo": 0.0,
+            "ci_hi": 0.027301322444306556,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.0011055862357263867,
+            "mean": 0.0015351584390340322,
+            "ci_lo": 0.0,
+            "ci_hi": 0.006396543313729929,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.23865576709638864,
+            "mean": 0.23797813028857717,
+            "ci_lo": 0.2309301838655332,
+            "ci_hi": 0.24324873880366518,
+            "n_reps": 50
+          }
+        },
+        "counterfactual": {
+          "disparate_impact": {
+            "point": 0.9845799426053468,
+            "mean": 0.9878712781744049,
+            "ci_lo": 0.806519622637749,
+            "ci_hi": 1.2233815333219802,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.11906032534794433,
+            "mean": 0.1188285128631823,
+            "ci_lo": 0.10723203942910847,
+            "ci_hi": 0.13221104826641641,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.12092708140226946,
+            "mean": 0.12119494726188677,
+            "ci_lo": 0.1080786062952365,
+            "ci_hi": 0.1329579350552505,
+            "n_reps": 50
+          }
+        }
+      }
+    },
+    {
+      "anchoring": {
+        "label": "instrument_d_llm_judge_alternative",
+        "mean_low": -0.22,
+        "mean_high": 0.55
+      },
+      "model": "linear_score",
+      "stages": {
+        "baseline": {
+          "disparate_impact": {
+            "point": 0.002239354822347899,
+            "mean": 0.0032773981353871055,
+            "ci_lo": 0.0,
+            "ci_hi": 0.014160910228814749,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.0005452562704471102,
+            "mean": 0.0007788906573058646,
+            "ci_lo": 0.0,
+            "ci_hi": 0.0033423743770764117,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.23917863702378797,
+            "mean": 0.23873321258485183,
+            "ci_lo": 0.23320462360396715,
+            "ci_hi": 0.24342613493694368,
+            "n_reps": 50
+          }
+        },
+        "counterfactual": {
+          "disparate_impact": {
+            "point": 0.9812895074050294,
+            "mean": 0.9958542308169898,
+            "ci_lo": 0.8110913337925617,
+            "ci_hi": 1.254294343223632,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.11886107121636957,
+            "mean": 0.1193609681931557,
+            "ci_lo": 0.1075509052881428,
+            "ci_hi": 0.1336401335431042,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.12112781706470943,
+            "mean": 0.12066071678239468,
+            "ci_lo": 0.10643032499415478,
+            "ci_hi": 0.13251064236858467,
+            "n_reps": 50
+          }
+        }
+      }
+    },
+    {
+      "anchoring": {
+        "label": "instrument_d_llm_judge_alternative",
+        "mean_low": -0.22,
+        "mean_high": 0.55
+      },
+      "model": "quadratic_aggregation",
+      "stages": {
+        "baseline": {
+          "disparate_impact": {
+            "point": 0.013805605912703947,
+            "mean": 0.013625107731163391,
+            "ci_lo": 0.0010189718482252147,
+            "ci_hi": 0.02866184161248021,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.0033003300330033004,
+            "mean": 0.003206830317060612,
+            "ci_lo": 0.00024671052631578954,
+            "ci_hi": 0.0065552773497688736,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.23631278081348678,
+            "mean": 0.23631609332106973,
+            "ci_lo": 0.2302038299724358,
+            "ci_hi": 0.24191596395376125,
+            "n_reps": 50
+          }
+        },
+        "counterfactual": {
+          "disparate_impact": {
+            "point": 1.0059614369546992,
+            "mean": 1.0007122699278386,
+            "ci_lo": 0.788581316840288,
+            "ci_hi": 1.2282937632279647,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.12035437430786268,
+            "mean": 0.11959133540565896,
+            "ci_lo": 0.10564416301656827,
+            "ci_hi": 0.1322019867549669,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.11964325529542921,
+            "mean": 0.12035838568023685,
+            "ci_lo": 0.10763422818791946,
+            "ci_hi": 0.13412278130496064,
+            "n_reps": 50
+          }
+        }
+      }
+    },
+    {
+      "anchoring": {
+        "label": "instrument_d_llm_judge_alternative",
+        "mean_low": -0.22,
+        "mean_high": 0.55
+      },
+      "model": "cubic_aggregation",
+      "stages": {
+        "baseline": {
+          "disparate_impact": {
+            "point": 0.01897361380155743,
+            "mean": 0.019806339949581916,
+            "ci_lo": 0.004702962009727103,
+            "ci_hi": 0.0343209649077855,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.004456892292183431,
+            "mean": 0.004634071347743802,
+            "ci_lo": 0.0011172982400507374,
+            "ci_hi": 0.007873934258737317,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.23412508689978168,
+            "mean": 0.2348986333772958,
+            "ci_lo": 0.22923688107913381,
+            "ci_hi": 0.24117087784273517,
+            "n_reps": 50
+          }
+        },
+        "counterfactual": {
+          "disparate_impact": {
+            "point": 0.9780249510140882,
+            "mean": 1.0151511391210881,
+            "ci_lo": 0.7914978915663551,
+            "ci_hi": 1.345384118966283,
+            "n_reps": 50
+          },
+          "selection_rate_group0": {
+            "point": 0.11867988807452681,
+            "mean": 0.1203871115632818,
+            "ci_lo": 0.105952686793507,
+            "ci_hi": 0.13750122807209056,
+            "n_reps": 50
+          },
+          "selection_rate_group1": {
+            "point": 0.12134698396946661,
+            "mean": 0.11955381416092249,
+            "ci_lo": 0.10220768717409255,
+            "ci_hi": 0.13411162914645594,
+            "n_reps": 50
+          }
+        }
+      }
+    }
+  ]
+}

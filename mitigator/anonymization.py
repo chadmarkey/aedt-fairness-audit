@@ -45,6 +45,8 @@ HONORIFIC_REPLACEMENTS = {
     r"\bMrs\.?\b": "[HONORIFIC]",
     r"\bMs\.?\b": "[HONORIFIC]",
     r"\bMiss\b": "[HONORIFIC]",
+    r"\bDr\.?\b": "[HONORIFIC]",
+    r"\bProf\.?\b": "[HONORIFIC]",
     r"\bSir\b": "[HONORIFIC]",
     r"\bMadam\b": "[HONORIFIC]",
 }
@@ -59,10 +61,13 @@ ETHNICITY_PATTERNS = [
 # regex that catches "X School of Medicine", "X Medical College", etc.
 # Users may extend this list with institution-specific patterns.
 SCHOOL_PATTERNS = [
-    r"\b[A-Z][a-zA-Z]+ (?:School of Medicine|Medical School|Medical College|College of Medicine|School of Osteopathic Medicine)\b",
-    r"\bGeisel\b", r"\bDartmouth\b", r"\bHarvard\b", r"\bYale\b", r"\bStanford\b",
-    r"\bColumbia\b", r"\bCornell\b", r"\bJohns Hopkins\b", r"\bUCSF\b", r"\bUCLA\b",
-    r"\bDuke\b", r"\bBaylor\b", r"\bMayo\b", r"\bWashington University\b",
+    r"\b[A-Z][a-zA-Z]+ (?:School of Medicine|Medical School|Medical College|College of Medicine|School of Osteopathic Medicine|University School of Medicine)\b",
+    # A small set of well-known short institution names that the generic
+    # regex above does not catch. Users can extend this via custom_patterns.
+    r"\bBaylor\b", r"\bColumbia\b", r"\bCornell\b", r"\bDartmouth\b",
+    r"\bDuke\b", r"\bHarvard\b", r"\bJohns Hopkins\b", r"\bMayo\b",
+    r"\bStanford\b", r"\bUCLA\b", r"\bUCSF\b", r"\bWashington University\b",
+    r"\bYale\b",
 ]
 
 
