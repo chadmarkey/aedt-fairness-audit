@@ -112,9 +112,20 @@ pip install openai          # OpenAI / Dartmouth-compatible endpoints
 pip install anthropic       # Anthropic
 ```
 
-## Usage
+## Tools
 
-### Generate a synthetic stratified corpus
+Each tool below has a one-paragraph plain-language description of what
+it does, followed by the command line for running it. All tools write
+JSON to disk; companion plot scripts in `plots/` render figures from the
+JSON output.
+
+### Generate a synthetic corpus — `tools/generate_ps_corpus.py`
+
+**What it does:** Generates a set of fake personal statements that span
+different demographic combinations (race, gender, school tier) while
+keeping the underlying narrative theme consistent within each group of
+applicants. Used as test input for the audits below — actual applicant
+text is never needed.
 
 ```bash
 OPENAI_API_KEY=sk-... python -m tools.generate_ps_corpus \
@@ -122,27 +133,54 @@ OPENAI_API_KEY=sk-... python -m tools.generate_ps_corpus \
     --out synthetic/data/ps_corpus.jsonl
 ```
 
-### Audit 1 — Bias Mitigator efficacy
+### Audit 1 — Bias Mitigator efficacy — `tools/run_audit_1.py`
 
-Compares disparate impact before and after applying the Claim 1 bias
-mitigator. Requires a `pipeline_fn` callable. See
-[`PIPELINE_BUILD_GUIDE.md`](PIPELINE_BUILD_GUIDE.md) for the interface.
+**What it does:** Tests whether the patent's bias-removal step actually
+removes bias. Runs the same scoring pipeline twice — once on raw
+applicant text, once after applying the patent's input-side
+detect-and-replace step — and compares whether the demographic gaps
+shrink. Requires a user-supplied scoring function via the `pipeline_fn`
+interface; see [`PIPELINE_BUILD_GUIDE.md`](PIPELINE_BUILD_GUIDE.md).
 
 ```bash
 python -m tools.run_audit_1 \
     --corpus synthetic/data/ps_corpus.jsonl \
     --pipeline my_pipeline:score_texts \
-    --out-dir out/audit_1
+    --out-dir out/audit_1 --bootstrap-reps 1000
 ```
 
-### Paragraph audit — section-aware multi-instrument scoring
+### Audit 2 — PS four-question extraction — `tools/run_audit_2.py`
 
-Splits a document into sections by header heuristic (or user-supplied
-regex), scores each section under user-selected instruments (VADER,
-RoBERTa, LLM judge), and flags any section that is rank-lowest
-unanimously across all instruments. Tests the architectural signal that
-section-aware extraction would surface and whole-document scoring would
-dilute.
+**What it does:** Tests the patent's personal-statement scoring
+component. The patent specifies four yes/no questions the system asks
+of each applicant's personal statement (poverty, refugee status, major
+illness, academic career interest). This audit measures whether the
+answers come out systematically different for different demographic
+groups. Runs in either an SBERT (embedding-similarity) or LLM
+(question-answering) variant.
+
+```bash
+# SBERT extractor
+python -m tools.run_audit_2 \
+    --corpus synthetic/data/ps_corpus.jsonl \
+    --out-dir out/audit_2 --extractor sbert --bootstrap-reps 1000
+
+# LLM extractor
+python -m tools.run_audit_2 \
+    --corpus synthetic/data/ps_corpus.jsonl \
+    --out-dir out/audit_2 --extractor llm \
+    --llm-provider openai --llm-model gpt-5-mini --bootstrap-reps 1000
+```
+
+### Paragraph audit — `tools/run_paragraph_audit.py`
+
+**What it does:** Scores a document one section at a time under
+multiple sentiment tools (VADER, RoBERTa, LLM judge), and flags any
+section that is the lowest-scoring section under every tool. This is
+the signal a "section-aware" AI screener would pick up if a single
+section of an otherwise-positive document carries a lower tone — for
+example, a paragraph describing a leave of absence in an otherwise
+laudatory recommendation letter.
 
 ```bash
 python -m tools.run_paragraph_audit \
@@ -152,12 +190,15 @@ python -m tools.run_paragraph_audit \
     --out out/paragraph_audit/scores.json
 ```
 
-### Dilution test — multi-instrument narrative-tone audit
+### Dilution test — `tools/run_dilution_test.py`
 
-Scores user-supplied narrative variants under multiple sentiment
-instruments (VADER, transformer, LLM judge), at excerpt level and at
-full-document level via a skeleton template with a
-`{VARIANT_PARAGRAPH}` placeholder.
+**What it does:** Compares two narrative variants — a low-tone version
+and a high-tone version of the same content — when scored as standalone
+excerpts vs when embedded in a longer surrounding document. Tests
+whether the score difference disappears when the variant is buried in
+context. The dilution percentage depends on which sentiment tool is
+used; lexicon and transformer tools tend to fully dilute, while LLM
+judges retain more of the gap.
 
 ```bash
 python -m tools.run_dilution_test \
@@ -165,50 +206,112 @@ python -m tools.run_dilution_test \
     --out-dir out/dilution_test
 ```
 
-The template format declares variants, instruments, the skeleton
-document path, and the variant pairs to compute gaps for. The
-included `examples/mspe_skeleton_template.txt` is a generic
-MSPE-style skeleton with placeholders for student name, school, and
-dates. Output: per-instrument per-variant compound scores, pairwise
-gaps, and dilution ratios.
+The included `examples/mspe_skeleton_template.txt` is a generic
+medical-school document skeleton with placeholders for student name,
+school, and dates.
 
-### Screening simulation — DI under sentiment-instrument anchorings
+### Screening simulation — `tools/run_screening_simulation.py`
 
-Generates n synthetic applicants under each user-supplied sentiment
-anchoring, trains a screening model, ranks at top-K, and reports
-disparate impact with bootstrap CIs. The user supplies sentiment
-anchorings (one per sentiment instrument they tested) — actual narrative
-text is not required.
+**What it does:** Simulates a residency-style screening process with
+thousands of synthetic applicants. The user supplies sentiment scores
+(the score the audited document gets under different tools) as
+"anchorings"; the simulation generates applicants where the
+disadvantaged group's narratives carry the low score and the favored
+group's carry the high score, trains a screening model on the
+combined applicant pool, and reports how often each group gets
+selected.
 
 ```bash
 python -m tools.run_screening_simulation \
     --anchorings examples/screening_anchorings_template.json \
     --out-dir out/screening_simulation \
-    --n 6000 --invite-rate 0.30 --bootstrap-reps 1000
+    --n 6000 --invite-rate 0.12 --bootstrap-reps 100
 ```
 
-The template format expects one entry per sentiment instrument with
-`{label, low_sentiment, high_sentiment}`. Output: per-anchoring DI
-metrics with 95% bootstrap CIs, written to
-`screening_simulation_results.json`.
+### Screening with counterfactual — `tools/run_screening_with_counterfactual.py`
 
-### Audit 2 — PS four-question extraction
-
-Computes per-question and aggregate disparate impact across demographic
-strata. The PSExtractor is the audit target; no external pipeline
-required.
+**What it does:** Runs the simulation above, then runs an "intervention"
+version: what if the disadvantaged group's narratives suddenly carried
+the high-tone scores instead? The intervention re-scores the same
+applicants under the same trained model with only the narrative-tone
+feature changed. Comparing the two reports how much of the disparity is
+driven by narrative tone alone. Supports multiple screening models
+including the patent's specified power-of-2 aggregation
+(`quadratic_aggregation`) from §530.
 
 ```bash
-# SBERT extractor (patent col. 22 line 31 enumerates SBERT)
-python -m tools.run_audit_2 \
-    --corpus synthetic/data/ps_corpus.jsonl \
-    --out-dir out/audit_2 --extractor sbert
+python -m tools.run_screening_with_counterfactual \
+    --anchorings examples/screening_anchorings_template.json \
+    --n 6000 --invite-rate 0.12 --narrative-sd 0.10 \
+    --bootstrap-reps 50 \
+    --models logistic_regression linear_score quadratic_aggregation cubic_aggregation \
+    --out out/screening_counterfactual/results.json
+```
 
-# LLM extractor (patent col. 10 says "users can apply NLP")
-python -m tools.run_audit_2 \
+### Disclosure-rate sweep — `tools/run_disclosure_sweep.py`
+
+**What it does:** Tests how much an AI vendor's "protected-class
+control" (a feature that suppresses sentiment scoring when ADA/504
+disclosure language is detected in the document) actually helps. The
+control only triggers when the applicant's text contains the
+disclosure language. The sweep varies what percentage of disadvantaged-
+group applicants disclose, and reports the resulting disparity at each
+rate.
+
+```bash
+python -m tools.run_disclosure_sweep \
+    --anchoring "vader_excerpt:0.18:0.78" \
+    --rates 0 0.05 0.10 0.25 0.50 0.75 0.90 1.00 \
+    --n 6000 --invite-rate 0.12 --bootstrap-reps 100 \
+    --out out/disclosure_sweep/results.json
+```
+
+### Content-equivalence validation — `tools/content_equivalence.py`
+
+**What it does:** Validates the synthetic corpus. Measures whether two
+synthetic applications from different demographic groups but the same
+narrative theme are more similar to each other than two applications
+from different themes. If the within-theme distance is meaningfully
+smaller than the across-theme distance, the corpus held content
+constant across demographic groups; if not, the audits' premise is
+suspect.
+
+```bash
+python -m tools.content_equivalence \
     --corpus synthetic/data/ps_corpus.jsonl \
-    --out-dir out/audit_2 --extractor llm \
+    --out out/content_equivalence/results.json
+```
+
+### Counterfactual decomposition — `tools/counterfactual_decomposition.py`
+
+**What it does:** When the audits show demographic disparity, this
+diagnostic asks: is the disparity driven by demographic markers
+(names, schools, identity phrases) or by deeper content patterns?
+Removes the markers using the patent's bias-removal step, re-scores
+the marker-stripped applications with the same scoring tool, and
+compares the results.
+
+```bash
+python -m tools.counterfactual_decomposition \
+    --corpus synthetic/data/ps_corpus.jsonl \
+    --original-scores out/audit_2/audit_2_per_applicant_scores_llm.csv \
+    --out-dir out/counterfactual \
     --llm-provider openai --llm-model gpt-5-mini
+```
+
+### Re-bootstrap — `tools/rebootstrap.py`
+
+**What it does:** Re-runs the statistical confidence-interval
+calculation from a prior audit's per-applicant scores at a higher
+bootstrap-replicate count, without re-running the expensive scoring
+step. Used to tighten error bars to publication-grade levels.
+
+```bash
+python -m tools.rebootstrap \
+    --scores out/audit_2/audit_2_per_applicant_scores_llm.csv \
+    --score-cols poverty refugee major_illness academic_career _total \
+    --top-frac 0.3 --bootstrap-reps 1000 \
+    --out out/audit_2/audit_2_results_llm_reps1000.json
 ```
 
 ### Library use
