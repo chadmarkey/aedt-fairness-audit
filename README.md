@@ -23,7 +23,12 @@ notebook, or asking someone to put six different Lego blocks together.
 This is publicly available information sanctioned by the Federal
 government with stress tests modeled after fairness methods cited and
 endorsed by the AAMC. Feel free to contribute and/or offer critiques and
-feedback.
+feedback. With really any coding agent, particularly Anthropic Opus 4.7
+or OpenAI GPT-5.5, you could likely drop this repo's .zip into a project
+workspace, and while staying in the loop, build out the pipeline in one
+afternoon. I built this out initially with Opus 4.5, and recently tested
+handoff to Codex GPT-5.5. Codex rebuilt the four-stage pipeline in one
+session without me having to correct the embedding or clustering steps.
 
 ## Components
 
