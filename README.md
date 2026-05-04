@@ -87,6 +87,23 @@ python -m tools.run_audit_1 \
     --out-dir out/audit_1
 ```
 
+### Paragraph audit — section-aware multi-instrument scoring
+
+Splits a document into sections by header heuristic (or user-supplied
+regex), scores each section under user-selected instruments (VADER,
+RoBERTa, LLM judge), and flags any section that is rank-lowest
+unanimously across all instruments. Tests the architectural signal that
+section-aware extraction would surface and whole-document scoring would
+dilute.
+
+```bash
+python -m tools.run_paragraph_audit \
+    --document /path/to/document.txt \
+    --instruments vader transformer llm \
+    --llm-provider openai --llm-model gpt-5-mini \
+    --out out/paragraph_audit/scores.json
+```
+
 ### Dilution test — multi-instrument narrative-tone audit
 
 Scores user-supplied narrative variants under multiple sentiment
