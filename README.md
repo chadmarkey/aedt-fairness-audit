@@ -67,18 +67,19 @@ The library does not include an AEDT pipeline implementation. Users supply
 their own scoring function via the `pipeline_fn` interface. See
 [`PIPELINE_BUILD_GUIDE.md`](PIPELINE_BUILD_GUIDE.md) for how to build a
 pipeline replicating the architecture disclosed in U.S. Patent No.
-12,265,502 B1 from off-the-shelf libraries. This is no different than
-going to the museum and sketching an image of a sculpture into a
-notebook, or asking someone to put six different Lego blocks together.
+12,265,502 B1 from off-the-shelf libraries. 
+
+This is no different than going to the museum and sketching an image of a sculpture into a
+notebook, or asking someone to put several different Lego blocks together.
 This is publicly available information sanctioned by the Federal
 government with stress tests modeled after fairness methods cited and
 endorsed by the AAMC. Feel free to contribute and/or offer critiques and
 feedback. With really any coding agent, particularly Anthropic Opus 4.7
 or OpenAI GPT-5.5, you could likely drop this repo's .zip into a project
 workspace, and while staying in the loop, build out the pipeline in one
-afternoon. I built this out initially with Opus 4.5, and recently tested
+afternoon. I built this out initially with Copilot and then Opus 4.5, and recently tested
 handoff to Codex GPT-5.5. Codex rebuilt the four-stage pipeline in one
-session without me having to correct the embedding or clustering steps.
+session without me having to correct the embedding or clustering steps. Opus 4.7 as well. I'd recommend running thorough validation with a reputable marketplace plug-in or code-review agent after your build, though, whether you hand craft this or vibe code it.
 
 ## Components
 
