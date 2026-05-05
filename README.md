@@ -27,18 +27,23 @@ ratio below 0.80, or above 1.25 in the reverse direction).
 
 ### What happens when you run it
 
-These are example numbers from a single run on 192 synthetic personal
-statements covering 24 demographic combinations. Specific values vary
-across runs; the patterns below are what to expect.
+These are example numbers from a 384-PS synthetic corpus covering 24
+demographic combinations. Specific values vary across runs; the
+patterns below are what to expect, and they replicate at a smaller
+n=192 corpus generated under a different scoring model.
 
-- The patent's personal-statement extractor produced selection-rate
-  ratios in the range 0.50–0.59 across demographic groups on three of
-  four questions — outside the four-fifths range.
+- The patent's personal-statement extractor produced two race-axis
+  per-question selection-rate ratios that reach conventional or
+  borderline statistical significance under permutation testing:
+  major_illness × race at 0.558 (p = 0.029) and refugee × race at
+  0.602 (p = 0.053). The aggregate `_total` × school_tier ratio of
+  0.650 (p = 0.059) is borderline-significant.
 - **Running the patent's own bias-removal step did not close the gap.**
   After deleting names, schools, and other demographic identifiers,
-  the ratios stayed within ±0.09 of their pre-removal values. The
-  patent's specified mitigation does not, on this synthetic test set,
-  reach the within-content signal the LLM extractor was reading.
+  the major_illness × race ratio is exactly unchanged (Δ = 0.000) and
+  the refugee × race ratio gets *stronger* (Δ = -0.064). The patent's
+  specified mitigation does not reach the within-content signal the
+  LLM extractor is reading.
 - The screening-simulation tool, run on illustrative sentiment
   anchorings, produced selection-rate ratios outside the four-fifths
   range under every scoring method tested (linear, logistic
@@ -150,9 +155,9 @@ gpt-5-mini for synthetic-PS generation and LLM-based PS extraction,
 the cost is roughly $1–$2 in API credits.
 
 ```bash
-# 1. Generate the 192-PS stratified synthetic corpus
+# 1. Generate the 384-PS stratified synthetic corpus
 OPENAI_API_KEY=sk-... python -m tools.generate_ps_corpus \
-    --provider openai --model gpt-5-mini \
+    --provider openai --model gpt-4o-mini --instances-per-cell 4 \
     --out synthetic/data/ps_corpus.jsonl
 
 # 2. Audit 1 — Bias Mitigator efficacy on a VADER baseline pipeline
@@ -611,22 +616,23 @@ is run on a corpus designed to isolate demographic markers from
 content," not as a population-level claim about real applicant text.
 
 **Bootstrap CIs behave poorly on discrete top-K selection; permutation
-tests are reported as the inferential complement.** With group sizes
-near 96 and binary top-K decisions, the disparate-impact ratio is a
-discrete-valued statistic. Percentile bootstrap intervals can sit
-above the point estimate or fail to bracket it cleanly. The audit
-runners therefore now also support a two-sided permutation test under
-the null of group-selection independence (`--n-permutations` flag on
-`tools/rebootstrap.py`); RESULTS.md reports those p-values alongside
-the bootstrap CIs at 10,000 permutations. At n = 192 with the shipped
-synthetic corpus, point estimates that sit outside the 4/5 range
-generally do not reach conventional p < 0.05 significance under
-permutation; the strongest cells (LLM extractor's race-axis findings
-on refugee and major_illness) reach p ≈ 0.07–0.08. The substantive
-finding is direction-consistency across questions despite limited
-per-question power, not any single cell's significance. Larger
-corpora (the toolkit supports `--instances-per-cell N` to scale up
-the synthetic generator) materially help.
+tests are reported as the inferential complement.** Even at moderate
+group sizes (~192 per group at n = 384), binary top-K selection
+produces a discrete-valued disparate-impact statistic, and percentile
+bootstrap intervals can sit above the point estimate or fail to
+bracket it cleanly. The audit runners support a two-sided permutation
+test under the null of group-selection independence (`--n-permutations`
+flag on `tools/rebootstrap.py`); RESULTS.md reports those p-values
+alongside the bootstrap CIs at 10,000 permutations. At n = 384 with
+the shipped synthetic corpus and a gpt-4o-mini LLM extractor, two
+race-axis cells reach significance or borderline significance under
+permutation testing: major_illness × race at p = 0.029 and refugee ×
+race at p = 0.053. The same cells were marginal (p ≈ 0.07–0.08) at
+n = 192 with a gpt-5-mini scoring model — direction-consistent across
+two corpus sizes and two scoring models, with significance tightening
+at the larger sample. Users running on smaller corpora should expect
+the percentile bootstrap to be a stability indicator rather than a
+significance test.
 
 **No ground truth for the four PS questions.** Audit 2 measures
 whether the patent's four-question extractor produces systematically
