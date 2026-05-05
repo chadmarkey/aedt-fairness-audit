@@ -9,22 +9,17 @@ embedding-similarity or LLM inference. Both are within the patent's
 allowed scope.
 
 This extractor provides the LLM-based variant. It is not a claim about
-Cortex's specific PS question-answering architecture, which is not
-publicly documented. Thalamus's published materials document
-gpt-5o-mini (Azure) for transcript normalization (the "Methodology for
-Creation and Processing of a Novel Transcript Normalization Tool" blog
-post) and a Halsted-derived model for the Academic Career Interest badge
-(October 2025 methodology page). Neither of these is the four-question
-PS extractor specifically; the model used for PS question answering, if
-any, is not disclosed.
+any specific deployed AEDT's PS question-answering architecture; the
+LLM choice here is the implementer's, not the patent's, and both
+extractor variants in this module (LLM and SBERT) are reasonable
+implementations of the patent's allowed scope.
 
-The LLM extractor here therefore serves as a **robustness check**
-alongside the SBERT extractor: robust audit findings should reproduce
-across both reasonable implementation patterns. The default model
-(gpt-5-mini for OpenAI, claude-haiku-4-5 for Anthropic) is selected to
-mirror the kind of small GPT-class / Claude-class model that Thalamus
-uses elsewhere in Cortex, not to match a specific deployed Cortex
-component.
+The LLM extractor serves as a **robustness check** alongside the SBERT
+extractor: robust audit findings should reproduce across both
+reasonable implementation patterns. The default models (a small
+OpenAI model such as `gpt-4o-mini` or `gpt-5-mini`; `claude-haiku-4-5`
+on Anthropic) are chosen to keep per-PS cost and latency tractable on
+small corpora.
 
 The interface matches `ps_extraction.PSExtractor` so the audit harness
 can swap extractors without changing call sites.

@@ -70,7 +70,7 @@ with the high-anchoring distribution and re-rank under the same
 trained model.
 
 Across the four illustrative anchorings, baseline DI sits at
-EEOC-failing levels under every scoring method tested (linear,
+levels outside the EEOC four-fifths range under every scoring method tested (linear,
 logistic regression, patent §530 power-of-2 aggregation,
 power-of-3 aggregation). Under the sentiment-only counterfactual, DI
 recovers to within ±0.05 of parity in every cell. The patent §530
@@ -92,11 +92,11 @@ disclosure depending on the anchoring's gap magnitude.
 
 | Disclosure rate | DI (lexicon-class anchoring) | DI status |
 |---:|---:|---|
-| 0% | ~0.10 | fails 4/5 by ~8× |
-| 5% | ~0.15 | fails 4/5 by ~5× |
-| 10% | ~0.19 | fails 4/5 by ~4× |
-| 25% | ~0.34 | fails 4/5 |
-| 50% | ~0.58 | fails 4/5 |
+| 0% | ~0.10 | outside 4/5 by ~8× |
+| 5% | ~0.15 | outside 4/5 by ~5× |
+| 10% | ~0.19 | outside 4/5 by ~4× |
+| 25% | ~0.34 | outside 4/5 |
+| 50% | ~0.58 | outside 4/5 |
 | 75% | ~0.78 | borderline |
 | 90% | ~0.91 | passes |
 | 100% | ~0.97 | passes |
@@ -164,7 +164,7 @@ Aggregate (patent §530 power-2 sum):
 | race | 1.048 | [0.595, 1.737] |
 | school_tier | 1.026 | [0.644, 1.683] |
 
-Aggregate gender DI fails EEOC 4/5 at point estimate; CI crosses 1.0 at
+Aggregate gender DI sits outside EEOC's four-fifths range at point estimate; CI crosses 1.0 at
 n=192. Driver: academic_career question (women selected at 76% rate of
 men).
 
@@ -199,8 +199,8 @@ fairness measurement; the CI characterizes resampling stability.
 
 ### Cross-extractor observation
 
-On the same corpus, the SBERT and LLM extractors fail EEOC 4/5 on
-different demographic axes:
+On the same corpus, the SBERT and LLM extractors raise adverse-impact
+flags under EEOC's four-fifths heuristic on different demographic axes:
 
 - SBERT: aggregate gender DI = 0.657
 - LLM: per-question race DI = 0.51–0.59 on three of four questions

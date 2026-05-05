@@ -34,21 +34,53 @@ across runs; the patterns below are what to expect.
 - The patent's personal-statement extractor produced selection-rate
   ratios in the range 0.50–0.59 across demographic groups on three of
   four questions — outside the four-fifths range.
-- Running the patent's own bias-removal step, which deletes names,
-  schools, and other demographic identifiers, did not close the gap.
-  The ratios stayed within ±0.09 of their pre-removal values.
+- **Running the patent's own bias-removal step did not close the gap.**
+  After deleting names, schools, and other demographic identifiers,
+  the ratios stayed within ±0.09 of their pre-removal values. The
+  patent's specified mitigation does not, on this synthetic test set,
+  reach the within-content signal the LLM extractor was reading.
 - The screening-simulation tool, run on illustrative sentiment
-  anchorings, produced selection-rate ratios well below the
-  four-fifths threshold under every scoring method tested (linear,
-  logistic regression, patent §530 power-of-2 aggregation,
-  power-of-3 aggregation). When narrative sentiment alone was held
-  constant across groups in a sentiment-only counterfactual, the
-  ratios returned to within sampling noise of parity.
+  anchorings, produced selection-rate ratios outside the four-fifths
+  range under every scoring method tested (linear, logistic
+  regression, patent §530 power-of-2 aggregation, power-of-3
+  aggregation). When narrative sentiment alone was held constant
+  across groups in a sentiment-only counterfactual, the ratios
+  returned to within sampling noise of parity.
 
 The technical results, with confidence intervals and methodology, are
 in [`RESULTS.md`](RESULTS.md). The audit code is in `tools/`. The
 plotting code is in `plots/`. Everything is reproducible from the
 command line.
+
+## Scope and claims
+
+This repository is a measurement and stress-test framework, not a
+reverse-engineered production system or an authoritative finding about
+any specific deployed AEDT.
+
+- The audits run on synthetic data, not real applicant text. Results
+  are illustrative and sensitivity-based, not population-level claims
+  about real-world hiring or screening outcomes.
+- The toolkit does not include an AEDT pipeline implementation. Users
+  supply their own scoring function via the `pipeline_fn` interface.
+  Different reasonable implementations of the patent's architecture
+  will produce different absolute selection-rate ratios.
+- Findings demonstrate that adverse-impact signals can emerge under
+  plausible configurations of the patent's specified architecture on
+  synthetic test data. They do not, and cannot, prove that any
+  specific deployed AEDT — including any product made by the patent's
+  assignee — implements the architecture in the same way the toolkit
+  does, uses the same parameters, or produces the same outputs.
+- The U.S. EEOC's four-fifths rule (29 C.F.R. § 1607) is a
+  regulatory screening heuristic for *adverse impact*, used by
+  agencies and compliance teams to flag selection processes that
+  warrant further review. It is not, on its own, a determination of
+  unlawful discrimination; that determination requires additional
+  evidence, regulatory process, and adjudication outside the scope of
+  this toolkit.
+
+For a fuller account of methodological boundaries, see
+[Limitations](#limitations) at the end of this file.
 
 ---
 
@@ -63,23 +95,13 @@ Implements:
   Patent No. 12,265,502 B1, with both an SBERT cosine-similarity extractor
   and an LLM question-answering extractor
 
-The library does not include an AEDT pipeline implementation. Users supply
-their own scoring function via the `pipeline_fn` interface. See
+The library does not include an AEDT pipeline implementation. Users
+supply their own scoring function via the `pipeline_fn` interface. See
 [`PIPELINE_BUILD_GUIDE.md`](PIPELINE_BUILD_GUIDE.md) for how to build a
 pipeline replicating the architecture disclosed in U.S. Patent No.
-12,265,502 B1 from off-the-shelf libraries. 
+12,265,502 B1 from off-the-shelf libraries.
 
-This is no different than going to the museum and sketching an image of a sculpture into a
-notebook, or asking someone to put several different Lego blocks together.
-This is publicly available information sanctioned by the Federal
-government with stress tests modeled after fairness methods cited and
-endorsed by the AAMC. Feel free to contribute and/or offer critiques and
-feedback. With really any coding agent, particularly Anthropic Opus 4.7
-or OpenAI GPT-5.5, you could likely drop this repo's .zip into a project
-workspace, and while staying in the loop, build out the pipeline in one
-afternoon. I built this out initially with Copilot and then Opus 4.5, and recently tested
-handoff to Codex GPT-5.5. Codex rebuilt the four-stage pipeline in one
-session without me having to correct the embedding or clustering steps. Opus 4.7 as well. I'd recommend running thorough validation with a reputable marketplace plug-in or code-review agent after your build, though, whether you hand craft this or vibe code it.
+Contributions and critiques are welcome via Issues and pull requests.
 
 ## Components
 
@@ -438,6 +460,96 @@ Other methodology references:
 - HDBSCAN: Campello, R. J. G. B., Moulavi, D., & Sander, J. (2013).
   *Density-based clustering based on hierarchical density estimates.*
   PAKDD.
+
+## Limitations
+
+This toolkit is a measurement instrument, not an authoritative finding
+about any specific deployed AEDT. Several caveats apply to how its
+outputs should be read.
+
+**Synthetic corpus, not real applicant data.** The audits run on
+LLM-generated personal statements stratified across demographic
+combinations. The corpus is designed so within-seed content is held
+approximately constant across demographic strata; this is validated by
+pairwise SBERT distance (within-seed-across-stratum mean cosine 0.253
+vs. across-seed mean 0.411, ratio 0.615). The separation is meaningful
+but not overwhelming. The generator may leak content along with
+demographic markers in ways the cosine check does not catch. Findings
+should be read as "this is what happens when the patent's architecture
+is run on a corpus designed to isolate demographic markers from
+content," not as a population-level claim about real applicant text.
+
+**Bootstrap CIs behave poorly on discrete top-K selection.** With
+group sizes near 96 and binary top-K decisions, the disparate-impact
+ratio is a discrete-valued statistic. Percentile bootstrap intervals
+can sit above the point estimate or fail to bracket it cleanly. The
+point DI is the substantive fairness measurement; the CI characterizes
+resampling stability rather than providing standard inferential
+coverage. Users running this on their own corpora should consider BCa
+intervals, permutation tests against the null of group exchangeability,
+or larger group sizes.
+
+**No ground truth for the four PS questions.** Audit 2 measures
+whether the patent's four-question extractor produces systematically
+different yes-rates across demographic groups. It does not measure
+whether those answers are *correct*; the synthetic corpus does not
+carry verified ground-truth labels for poverty / refugee / illness /
+academic-career status independent of what the generator was prompted
+to encode. Group-rate disparities are the measurand; calibration
+against truth is not.
+
+**The pipeline implementation is the user's, not the toolkit's.** The
+library does not ship an AEDT pipeline. Audit 1 requires the user to
+supply their own `pipeline_fn`. Different reasonable implementations of
+the patent's architecture will produce different absolute DI values.
+The toolkit's role is to provide a consistent measurement framework,
+not to certify that any one implementation is the patent's "true"
+implementation.
+
+**Default extractor parameters are implementer's choices.** The SBERT
+extractor's threshold (0.35), softmax temperature (8.0), aggregate
+power (2.0), and exemplar inventory are documented in
+[`DEVIATIONS_FROM_PATENT.md`](DEVIATIONS_FROM_PATENT.md) as
+implementation choices the patent does not specify. Changing these can
+shift per-question DI values. Robust findings should reproduce across
+reasonable parameter ranges; users running audits should report the
+parameters used.
+
+**Two extractor variants are not exhaustive.** The SBERT and LLM
+extractors represent two reasonable instantiations of "users can apply
+NLP to read through personal statement of each applicant" (col. 10).
+Other architectures consistent with the patent — hybrid
+retrieval-augmented systems, fine-tuned classifiers, ensemble
+approaches — are not tested. Findings that hold across SBERT and LLM
+extractors are more robust than findings that appear in only one.
+
+**The bias mitigator's failure to close gaps is a result, not a bug.**
+Audit 1 and the counterfactual decomposition both find that input-side
+anonymization (Claim 1's specified operation) does not substantially
+reduce demographic disparity in the conditions tested. This is the
+toolkit reporting what the patent's specified mitigation does on the
+synthetic corpus; it is not a proof that no mitigation could close the
+gap. Output-side recalibration (col. 24, lines 19–46) is in the patent
+spec but discretionary under Claim 1, with no algorithm specified, and
+is not implemented here. Users designing their own mitigations may
+find approaches that perform differently.
+
+**Findings are about an architecture class, not a specific product.**
+This toolkit tests the architecture disclosed in U.S. Patent No.
+12,265,502 B1 as implemented from public components. It does not, and
+cannot, claim that any specific deployed AEDT — including any product
+made by the patent's assignee — implements the architecture in the
+same way the toolkit does, uses the same parameters, or produces the
+same outputs. Inference from toolkit results to specific deployed
+products requires independent evidence about those products.
+
+**Demographic axes are limited to those the synthetic generator
+stratifies.** The shipped corpus stratifies on race (4 categories),
+gender (binary), and school tier (3 levels). Disability status, age,
+sexual orientation, geographic origin, language background, and
+intersectional combinations beyond the three axes are not separately
+tested. Users investigating those axes should extend the generator and
+re-run.
 
 ## Citation
 
