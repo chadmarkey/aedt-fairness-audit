@@ -133,9 +133,85 @@ pip install spacy
 python -m spacy download en_core_web_sm
 
 # For LLM extractor:
-pip install openai          # OpenAI / Dartmouth-compatible endpoints
+pip install openai          # OpenAI or any OpenAI-compatible endpoint
 pip install anthropic       # Anthropic
 ```
+
+## Quickstart — reproduce the reference outputs
+
+A committed reference output set lives in
+[`examples/reference_outputs/`](examples/reference_outputs/). It
+contains one representative run of every CLI tool, in JSON plus
+rendered PNG/PDF figures. Use it as a known-good baseline to diff your
+own runs against.
+
+The full synthetic-corpus audit set reproduces in five commands. With
+gpt-5-mini for synthetic-PS generation and LLM-based PS extraction,
+the cost is roughly $1–$2 in API credits.
+
+```bash
+# 1. Generate the 192-PS stratified synthetic corpus
+OPENAI_API_KEY=sk-... python -m tools.generate_ps_corpus \
+    --provider openai --model gpt-5-mini \
+    --out synthetic/data/ps_corpus.jsonl
+
+# 2. Audit 1 — Bias Mitigator efficacy on a VADER baseline pipeline
+python -m tools.run_audit_1 \
+    --corpus synthetic/data/ps_corpus.jsonl \
+    --pipeline examples.example_pipeline:score_texts \
+    --out-dir out/audit_1 --bootstrap-reps 1000
+
+# 3. Audit 2 — PS four-question extraction (SBERT + LLM variants)
+python -m tools.run_audit_2 \
+    --corpus synthetic/data/ps_corpus.jsonl \
+    --out-dir out/audit_2 --extractor sbert --bootstrap-reps 1000
+
+python -m tools.run_audit_2 \
+    --corpus synthetic/data/ps_corpus.jsonl \
+    --out-dir out/audit_2 --extractor llm \
+    --llm-provider openai --llm-model gpt-5-mini --bootstrap-reps 1000
+
+# 4. Content-equivalence validation
+python -m tools.content_equivalence \
+    --corpus synthetic/data/ps_corpus.jsonl \
+    --out out/content_equivalence/results.json
+
+# 5. Counterfactual decomposition (marker-stripping diagnostic)
+python -m tools.counterfactual_decomposition \
+    --corpus synthetic/data/ps_corpus.jsonl \
+    --original-scores out/audit_2/audit_2_per_applicant_scores_llm.csv \
+    --out-dir out/counterfactual \
+    --llm-provider openai --llm-model gpt-5-mini
+
+# 6. Render figures
+python -m plots.plot_audit_1 \
+    --input out/audit_1/audit_1_results.json --out-dir out/audit_1
+python -m plots.plot_audit_2 \
+    --input out/audit_2/audit_2_results_sbert.json --out-dir out/audit_2 \
+    --name audit_2_sbert_di_heatmap --title-suffix " (SBERT)"
+python -m plots.plot_audit_2 \
+    --input out/audit_2/audit_2_results_llm.json --out-dir out/audit_2 \
+    --name audit_2_llm_di_heatmap --title-suffix " (LLM, gpt-5-mini)"
+python -m plots.plot_content_equivalence \
+    --input out/content_equivalence/results.json --out-dir out/content_equivalence
+python -m plots.plot_counterfactual_decomposition \
+    --input out/counterfactual/counterfactual_decomposition.json \
+    --out-dir out/counterfactual
+```
+
+Compare your `out/` figures against
+`examples/reference_outputs/` for sanity. Specific numerical values
+will not match exactly — synthetic-PS generation is stochastic, model
+outputs vary across API calls, and bootstrap seeds drift — but the
+qualitative patterns (which axes raise an adverse-impact flag, which
+direction the mitigator moves the ratios, the ordering of the
+content-equivalence nesting levels) should reproduce. If they do not,
+that is itself an audit-worthy finding.
+
+The screening-simulation, dilution, disclosure-sweep, and
+paragraph-audit tools are documented under [Tools](#tools) below;
+their reference outputs are in `examples/reference_outputs/`
+alongside the synthetic-corpus runs above.
 
 ## Tools
 
