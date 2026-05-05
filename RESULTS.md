@@ -125,9 +125,14 @@ fresh JSON + PNG/PDF figures to user-supplied `--out-dir` paths.
 Each directory also contains the rendered figure (`.png` and `.pdf`)
 produced by the corresponding `plots/plot_*.py` script.
 
-Corpus: 192 PSs across 4 content seeds × 4 races × 2 genders × 3 school
-tiers × 2 instances. Generated with `tools.generate_ps_corpus` using
-`gpt-5-mini`.
+Corpus: 384 PSs across 4 content seeds × 4 races × 2 genders × 3 school
+tiers × 4 instances. Generated with `tools.generate_ps_corpus` using
+`gpt-4o-mini`. The same audit pipeline was also run at n=192 with
+gpt-5-mini-generated PSs and gpt-5-mini scoring; results were
+direction-consistent and individually underpowered. The n=384 + gpt-4o-mini
+configuration is reported here as the primary; the n=192 + gpt-5-mini
+configuration is described at the end of this section as a robustness
+check.
 
 ### Audit 1 — Bias Mitigator efficacy on a VADER pipeline
 
@@ -135,20 +140,16 @@ Top-K = 0.20, bootstrap reps = 1000, permutation reps = 10,000.
 
 | Axis | Baseline DI [95% CI] perm-p | Post-mitigation DI [95% CI] perm-p | Δ DI |
 |---|:---:|:---:|---:|
-| gender | 1.111 [0.542, 2.034] p=0.72 | 1.000 [0.523, 1.795] p=1.00 | -0.111 |
-| race | 1.074 [0.525, 2.389] p=0.84 | 0.933 [0.484, 2.063] p=1.00 | -0.141 |
-| school_tier | 1.611 [0.837, 3.960] p=0.11 | 1.400 [0.714, 3.225] p=0.24 | -0.211 |
+| gender | 1.081 [0.728, 1.668] p=0.70 | 1.026 [0.689, 1.580] p=0.90 | -0.055 |
+| race | 1.271 [0.827, 2.415] p=0.27 | 1.271 [0.798, 2.173] p=0.27 | 0.000 |
+| school_tier | 0.875 [0.572, 1.333] p=0.59 | 0.828 [0.534, 1.202] p=0.50 | -0.047 |
 
-None of the Audit 1 baseline cells reach permutation significance at
-n = 192. The school_tier baseline point estimate (1.611, outside the
-4/5 upper bound of 1.25) is the closest to significance (p = 0.11) and
-moves toward parity post-mitigation, but the sample is underpowered
-to confirm the effect inferentially.
-
-VADER is a sentiment baseline, not the patent's NLP architecture. All
-three axes drift toward parity post-mitigation; baselines are within
-EEOC bounds. Substantively interpreting Claim 1 efficacy requires a
-patent-faithful pipeline; build one yourself per
+VADER is a sentiment baseline, not the patent's NLP architecture. None
+of the Audit 1 cells reach permutation significance at n = 384. The
+race baseline point estimate (1.271, just outside the 4/5 upper bound
+of 1.25) is the closest, and the mitigator does not move it.
+Substantively interpreting Claim 1 efficacy requires a patent-faithful
+pipeline; build one yourself per
 [`PIPELINE_BUILD_GUIDE.md`](PIPELINE_BUILD_GUIDE.md).
 
 ### Audit 2 SBERT — PS four-question extraction
@@ -159,35 +160,36 @@ Top-K = 0.30, bootstrap reps = 1000, permutation reps = 10,000.
 
 | Question | gender | race | school_tier |
 |---|:---:|:---:|:---:|
-| poverty | 0.812 [0.544, 1.359] | 1.048 [0.637, 1.913] | 1.026 [0.674, 1.764] |
-| refugee | 0.933 [0.584, 1.465] | 1.048 [0.691, 2.041] | 1.206 [0.799, 2.289] |
-| major_illness | 1.231 [0.830, 1.981] | 1.048 [0.654, 1.969] | 1.111 [0.660, 1.804] |
-| **academic_career** | **0.758** [0.457, 1.174] | 1.278 [0.717, 2.230] | 0.950 [0.611, 1.579] |
+| poverty | 0.949 [0.713, 1.328] | **0.794** [0.594, 1.167] | 1.054 [0.752, 1.445] |
+| refugee | 1.130 [0.794, 1.534] | 1.141 [0.794, 1.741] | 1.054 [0.768, 1.464] |
+| major_illness | 0.949 [0.648, 1.258] | 0.865 [0.641, 1.242] | 0.974 [0.714, 1.355] |
+| academic_career | 0.885 [0.611, 1.149] | 0.989 [0.752, 1.576] | 1.242 [0.869, 1.775] |
 
 #### Per-question permutation p-values
 
 | Question | gender | race | school_tier |
 |---|:---:|:---:|:---:|
-| poverty | 0.434 | 0.867 | 1.000 |
-| refugee | 0.871 | 0.862 | 0.415 |
-| major_illness | 0.346 | 0.855 | 0.742 |
-| academic_career | 0.269 | 0.314 | 0.867 |
+| poverty | 0.820 | 0.252 | 0.808 |
+| refugee | 0.445 | 0.449 | 0.809 |
+| major_illness | 0.828 | 0.519 | 0.906 |
+| academic_career | 0.505 | 1.000 | 0.176 |
 
 #### Aggregate (patent §530 power-2 sum)
 
 | Axis | DI | 95% CI | perm-p |
 |---|---:|:---:|:---:|
-| **gender** | **0.657** | [0.432, 1.117] | 0.121 |
-| race | 1.048 | [0.595, 1.737] | 0.860 |
-| school_tier | 1.026 | [0.644, 1.683] | 1.000 |
+| gender | 0.855 | [0.596, 1.118] | 0.373 |
+| race | 0.828 | [0.614, 1.220] | 0.371 |
+| school_tier | 1.143 | [0.780, 1.538] | 0.417 |
 
-Aggregate gender DI = 0.657 is the SBERT extractor's strongest signal
-at point estimate and reaches p = 0.12 under permutation testing —
-suggestive but not conventionally significant at n = 192. The
-academic_career question is the per-question driver (DI = 0.758,
-p = 0.27).
+The SBERT extractor produces no cells with permutation p < 0.10 at
+n = 384. The strongest point estimate (poverty × race = 0.794, just
+inside the 4/5 lower bound) reaches p = 0.25. The aggregate gender
+finding observed at n = 192 (DI = 0.657, p = 0.12) does not replicate
+at n = 384 (aggregate gender = 0.855, p = 0.37) — the n = 192 result
+appears to have been a small-corpus artifact.
 
-### Audit 2 LLM (gpt-5-mini) — PS four-question extraction
+### Audit 2 LLM (gpt-4o-mini) — PS four-question extraction
 
 Top-K = 0.30, bootstrap reps = 1000, permutation reps = 10,000.
 
@@ -195,10 +197,10 @@ Top-K = 0.30, bootstrap reps = 1000, permutation reps = 10,000.
 
 | Question | gender | race | school_tier |
 |---|:---:|:---:|:---:|
-| poverty | 1.000 [0.611, 1.522] | 0.956 [0.640, 1.804] | 1.026 [0.660, 1.701] |
-| refugee | 1.071 [0.668, 1.637] | **0.507** [0.610, 1.645] | 1.026 [0.692, 1.785] |
-| major_illness | 1.148 [0.682, 1.554] | **0.545** [0.592, 1.690] | 0.881 [0.611, 1.537] |
-| academic_career | 1.071 [0.630, 1.491] | **0.587** [0.592, 1.645] | 0.950 [0.613, 1.506] |
+| poverty | 1.130 [0.744, 1.398] | 1.200 [0.793, 1.732] | 1.097 [0.752, 1.415] |
+| refugee | 1.130 [0.688, 1.272] | **0.602** [0.772, 1.663] | 0.938 [0.707, 1.420] |
+| major_illness | 1.091 [0.722, 1.350] | **0.558** [0.710, 1.441] | 0.938 [0.723, 1.374] |
+| academic_career | 1.018 [0.706, 1.300] | 0.865 [0.705, 1.489] | 0.723 [0.451, 1.064] |
 
 #### Per-question two-sided permutation p-values
 
@@ -207,47 +209,55 @@ top-K selection (n_perms = 10,000):
 
 | Question | gender | race | school_tier |
 |---|:---:|:---:|:---:|
-| poverty | 1.000 | 1.000 | 1.000 |
-| refugee | 0.748 | **0.071** | 1.000 |
-| major_illness | 0.532 | **0.083** | 0.618 |
-| academic_career | 0.752 | 0.157 | 0.871 |
+| poverty | 0.443 | 0.318 | 0.627 |
+| refugee | 0.448 | **0.053** | 0.727 |
+| major_illness | 0.580 | **0.029** | 0.722 |
+| academic_career | 0.911 | 0.525 | 0.110 |
 
 #### Aggregate
 
 | Axis | DI | 95% CI | perm-p |
 |---|---:|:---:|:---:|
-| gender | 1.000 | [0.649, 1.522] | 1.000 |
-| race | 0.875 | [0.615, 1.667] | 0.720 |
-| school_tier | 0.950 | [0.601, 1.571] | 0.872 |
+| gender | 1.018 | [0.739, 1.355] | 0.913 |
+| race | 1.036 | [0.761, 1.619] | 0.899 |
+| school_tier | **0.650** | [0.508, 1.055] | **0.059** |
 
-Three of four race-axis questions sit at DI ≈ 0.51–0.59 — point estimates
-outside the four-fifths range. Two of those three (refugee, major_illness)
-reach marginal permutation significance (p ≈ 0.07–0.08); academic_career
-shows the same direction at p = 0.16. The aggregate `_total` row masks
-the per-question pattern because the four questions partially cancel
-when summed under §530's power-2 aggregation.
+**Headline findings (n = 384):**
 
-**Reading the bootstrap CIs alongside the permutation p-values.** With
-n = 192, group sizes ~96, and binary top-K selection, the disparate-
-impact ratio is a discrete-valued statistic. Several percentile CIs
-(refugee/illness/academic_career race) sit *above* the point estimate
-they bracket — a known pathology of bootstrap percentile intervals on
-small-n discrete statistics. The permutation p-values are the
-appropriate inferential complement here: at this sample size, the
-point estimates are descriptively striking but individually
-underpowered. The substantive finding is the *direction-consistency*
-across three race-axis questions despite limited per-question power,
-not any single cell's significance.
+- **major_illness × race: DI = 0.558, p = 0.029** — significant at
+  conventional p < 0.05.
+- **refugee × race: DI = 0.602, p = 0.053** — borderline significant.
+- **aggregate `_total` × school_tier: DI = 0.650, p = 0.059** — borderline
+  significant; new at n = 384 (was DI = 0.950, p = 0.87 at n = 192).
+- The two race-axis findings are direction-consistent with the n = 192
+  result (refugee 0.507/p=0.07, major_illness 0.545/p=0.08): same
+  direction, similar magnitude, with significance tightening at the
+  larger sample. Robustness across two corpus sizes (n = 192, n = 384)
+  *and* two scoring models (gpt-5-mini, gpt-4o-mini) is the strongest
+  empirical claim the audit makes.
+
+The aggregate `_total` row largely cancels the per-question race
+disparities under §530's power-2 aggregation; the school_tier
+aggregate signal is driven by academic_career × school_tier (DI = 0.723,
+p = 0.11).
+
+**Reading the bootstrap CIs alongside the permutation p-values.** Even
+at n = 384, several percentile CIs (e.g., refugee/illness race) sit
+above the point estimate they bracket — the known pathology of
+bootstrap percentile intervals on discrete top-K selection statistics.
+The permutation p-values are the appropriate inferential complement;
+they confirm the substantive findings the bootstrap CIs are too
+coarse to characterize.
 
 ### Cross-extractor observation
 
-On the same corpus, the SBERT and LLM extractors raise adverse-impact
-flags under EEOC's four-fifths heuristic on different demographic axes:
-
-- SBERT: aggregate gender DI = 0.657
-- LLM: per-question race DI = 0.51–0.59 on three of four questions
-
-The axis depends on architectural choices the patent does not specify.
+The SBERT and LLM extractors produce different per-cell findings on
+the same corpus. SBERT shows no individual cell with p < 0.10 at
+n = 384; LLM shows two race-axis cells (refugee, major_illness) at
+p ≤ 0.053 plus an aggregate school_tier finding at p = 0.059. The
+extractor architecture is an implementer's choice the patent does not
+specify; both implementations are within col. 10's "users can apply
+NLP" scope.
 
 ---
 
@@ -255,46 +265,51 @@ The axis depends on architectural choices the patent does not specify.
 
 ### Content equivalence
 
-Pairwise SBERT cosine distance over the 192-PS corpus at three nesting
+Pairwise SBERT cosine distance over the 384-PS corpus at three nesting
 levels:
 
 | Nesting level | n pairs | mean | median | p10 | p90 |
 |---|---:|---:|---:|---:|---:|
-| within seed, within stratum | 96 | 0.209 | 0.197 | 0.138 | 0.278 |
-| within seed, across stratum | 4,416 | 0.253 | 0.241 | 0.182 | 0.326 |
-| across seed | 13,824 | 0.411 | 0.405 | 0.303 | 0.523 |
+| within seed, within stratum | 576 | 0.166 | 0.160 | 0.111 | 0.225 |
+| within seed, across stratum | 17,856 | 0.215 | 0.210 | 0.153 | 0.285 |
+| across seed | 55,296 | 0.337 | 0.336 | 0.259 | 0.418 |
 
-Ratio (within-seed-across-stratum / across-seed) = **0.615**.
+Ratio (within-seed-across-stratum / across-seed) = **0.637**.
 
-Mean within-seed-across-stratum cosine distance (0.253) is 61.5% of
-mean across-seed cosine distance (0.411). Within-seed-within-stratum
-distance (0.209) is the smallest of the three.
+Mean within-seed-across-stratum cosine distance (0.215) is 63.7% of
+mean across-seed cosine distance (0.337). The ordering of the three
+levels (within-stratum < across-stratum < across-seed) is preserved
+from n = 192 (where the ratio was 0.615), and the relative gap between
+demographic-marker drift and seed-level content drift is essentially
+unchanged.
 
 ### Counterfactual decomposition
 
 Apply the Claim 1 BiasMitigator (input-side anonymization: spaCy NER for
 names, schools, locations + curated regex for pronouns, honorifics,
 ethnicity, school names) to each PS. Re-score the marker-stripped PS
-with the same LLM extractor. Compare DI on stripped vs. original scores
-per question. Tests whether the LLM extractor's per-question race DI of
-0.51–0.59 is driven by demographic markers (names, schools, identity
-phrases) or by within-seed content variation.
+with the same LLM extractor (gpt-4o-mini). Compare DI on stripped vs.
+original scores per question. Tests whether the LLM extractor's
+per-question race DI is driven by demographic markers (names, schools,
+identity phrases) or by within-seed content variation.
 
-#### Race-axis decomposition (the questions that produced original DI)
+#### Race-axis decomposition (the cells with significant or borderline-significant findings)
 
 | Question | DI(original) | DI(marker-stripped) | Δ | Interpretation |
 |---|---:|---:|---:|---|
-| refugee | 0.507 | 0.545 | +0.038 | content-driven |
-| major_illness | 0.545 | 0.633 | +0.088 | content-driven |
-| academic_career | 0.587 | 0.587 | 0.000 | content-driven |
-| _total | 0.875 | 1.278 | +0.403 | content-driven |
+| refugee | 0.602 | 0.538 | -0.064 | content-driven; gap *widens* post-strip |
+| major_illness | 0.558 | 0.558 | 0.000 | content-driven; *no movement* |
+| academic_career | 0.865 | 0.903 | +0.039 | content-driven |
+| _total (school_tier) | 0.650 | 0.750 | +0.100 | content-driven |
 
-After Claim 1 input-side anonymization (NER + curated identifier
-substitution), the three race-axis per-question DIs that failed EEOC
-4/5 in the original run (refugee, major_illness, academic_career)
-remain at 0.55–0.63 within ±0.09 of their original values. The
-aggregate `_total` row moves from 0.875 to 1.278; the magnitude is
-preserved, the direction reverses.
+The two findings that reach permutation significance at n = 384
+(major_illness × race at p = 0.029, refugee × race at p = 0.053) are
+**not affected** by the patent's specified bias-removal step. Stripping
+all detectable identifying tokens leaves the major_illness disparity
+exactly unchanged and *increases* the refugee disparity. The aggregate
+school_tier signal also persists post-strip (0.650 → 0.750). The
+patent's input-side anonymization, applied as written, does not reach
+the within-content signal the LLM extractor is reading.
 
 For reference, the patent's Claim 1 specifies the mitigation as
 detect-and-replace on identifying tokens with semantic structure
@@ -332,9 +347,9 @@ up.
 ## Reproducing the synthetic-corpus audits
 
 ```bash
-# 1. Generate corpus (~$1 in API credits with gpt-5-mini)
+# 1. Generate corpus (~$2-3 in API credits with gpt-4o-mini, n=384)
 OPENAI_API_KEY=sk-... python -m tools.generate_ps_corpus \
-    --provider openai --model gpt-5-mini \
+    --provider openai --model gpt-4o-mini --instances-per-cell 4 \
     --out synthetic/data/ps_corpus.jsonl
 
 # 2. Audit 1 — VADER baseline + Claim 1 mitigator
