@@ -208,10 +208,65 @@ direction the mitigator moves the ratios, the ordering of the
 content-equivalence nesting levels) should reproduce. If they do not,
 that is itself an audit-worthy finding.
 
-The screening-simulation, dilution, disclosure-sweep, and
-paragraph-audit tools are documented under [Tools](#tools) below;
-their reference outputs are in `examples/reference_outputs/`
-alongside the synthetic-corpus runs above.
+### Screener-model simulation
+
+The screener-model tools do not require the synthetic-PS corpus. They
+take a JSON of sentiment-instrument anchorings — one entry per
+sentiment instrument, naming the score it produces on a low-tone vs. a
+high-tone variant of the same content — and use those anchorings to
+generate stratified synthetic applicants for a top-K invite
+simulation. The example anchorings live in
+[`examples/screening_anchorings_template.json`](examples/screening_anchorings_template.json);
+replace with your own sentiment scores when running on your own
+document.
+
+```bash
+# 1. Multi-instrument × multi-scoring-method screen + sentiment-only
+#    counterfactual. Reports baseline DI and counterfactual DI under
+#    linear, logistic-regression, patent §530 power-of-2 (quadratic),
+#    and power-of-3 (cubic) scoring rules across all anchorings.
+python -m tools.run_screening_with_counterfactual \
+    --anchorings examples/screening_anchorings_template.json \
+    --n 6000 --invite-rate 0.12 --narrative-sd 0.10 \
+    --bootstrap-reps 50 \
+    --models logistic_regression linear_score quadratic_aggregation cubic_aggregation \
+    --out out/screening_counterfactual/results_multimodel.json
+
+# 2. Disclosure-rate sweep — DI as a function of the rate at which
+#    disadvantaged-group applicants disclose protected-class language
+#    a vendor's control would trigger on
+python -m tools.run_disclosure_sweep \
+    --anchoring "lexicon:0.18:0.78" \
+    --rates 0 0.05 0.10 0.25 0.50 0.75 0.90 1.00 \
+    --n 6000 --invite-rate 0.12 --bootstrap-reps 100 \
+    --out out/disclosure_sweep/results.json
+
+# 3. Dilution test — excerpt vs full-document gap per instrument
+python -m tools.run_dilution_test \
+    --config examples/dilution_test_template.json \
+    --out-dir out/dilution_test
+
+# 4. Paragraph audit — section-aware multi-instrument scoring of a
+#    single user-supplied document
+python -m tools.run_paragraph_audit \
+    --document /path/to/document.txt \
+    --instruments vader transformer \
+    --out out/paragraph_audit/scores.json
+
+# 5. Render figures
+python -m plots.plot_screening_counterfactual \
+    --input out/screening_counterfactual/results_multimodel.json \
+    --out-dir out/screening_counterfactual --name screening_counterfactual_multimodel
+python -m plots.plot_disclosure_sweep \
+    --input out/disclosure_sweep/results.json --out-dir out/disclosure_sweep
+python -m plots.plot_dilution_test \
+    --input out/dilution_test/dilution_test_results.json --out-dir out/dilution_test
+python -m plots.plot_paragraph_audit \
+    --input out/paragraph_audit/scores.json --out-dir out/paragraph_audit
+```
+
+Reference output set lives at
+`examples/reference_outputs/{screening_counterfactual, disclosure_sweep, dilution_test, paragraph_audit}/`.
 
 ## Tools
 
