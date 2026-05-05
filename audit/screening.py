@@ -104,15 +104,44 @@ def bootstrap_di(
     n_reps: int = 200,
     seed: int = 0,
     alpha: float = 0.05,
+    stratified: bool = True,
 ) -> Dict[str, float]:
-    """Bootstrap percentile CI for the DI ratio at a given top-K threshold."""
+    """Bootstrap percentile CI for the DI ratio at a given top-K threshold.
+
+    With ``stratified=True`` (default), resamples within each protected
+    group at its original size. This preserves the original group
+    structure and avoids a small-group bootstrap pathology where pooled
+    resampling with replacement on an imbalanced design drifts the
+    bootstrap distribution well away from the observed sample DI
+    (especially under discrete top-K selection, where group-mix
+    fluctuations move the threshold).
+
+    With ``stratified=False``, falls back to the pooled-sample bootstrap.
+    Retained for backward compatibility and for cases where the user
+    wants joint-distribution variability (e.g., when group composition
+    itself is part of the inference target).
+    """
     rng = np.random.default_rng(seed)
     mask = group >= 0
-    idx = np.where(mask)[0]
-    n = len(idx)
+    idx_all = np.where(mask)[0]
+    n_all = len(idx_all)
+
+    idx_g0 = np.where(group == 0)[0]
+    idx_g1 = np.where(group == 1)[0]
+    n_g0 = len(idx_g0)
+    n_g1 = len(idx_g1)
+    if stratified and (n_g0 == 0 or n_g1 == 0):
+        # Degenerate: no two-group structure. Fall back to pooled.
+        stratified = False
+
     di_vals: List[float] = []
     for _ in range(n_reps):
-        resample = rng.choice(idx, size=n, replace=True)
+        if stratified:
+            rs_g0 = rng.choice(idx_g0, size=n_g0, replace=True)
+            rs_g1 = rng.choice(idx_g1, size=n_g1, replace=True)
+            resample = np.concatenate([rs_g0, rs_g1])
+        else:
+            resample = rng.choice(idx_all, size=n_all, replace=True)
         s = scores[resample]
         g = group[resample]
         sel = top_k_selection(s, top_frac)
@@ -120,7 +149,11 @@ def bootstrap_di(
         if not np.isnan(m["disparate_impact"]):
             di_vals.append(m["disparate_impact"])
     if not di_vals:
-        return {"point": float("nan"), "ci_lo": float("nan"), "ci_hi": float("nan"), "n_reps": 0}
+        return {
+            "point": float("nan"), "ci_lo": float("nan"), "ci_hi": float("nan"),
+            "n_reps": 0,
+            "method": "stratified_percentile" if stratified else "pooled_percentile",
+        }
     arr = np.array(di_vals)
     return {
         "point": float(np.median(arr)),
@@ -128,6 +161,7 @@ def bootstrap_di(
         "ci_lo": float(np.quantile(arr, alpha / 2)),
         "ci_hi": float(np.quantile(arr, 1 - alpha / 2)),
         "n_reps": int(len(arr)),
+        "method": "stratified_percentile" if stratified else "pooled_percentile",
     }
 
 

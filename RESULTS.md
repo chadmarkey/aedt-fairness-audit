@@ -136,13 +136,16 @@ check.
 
 ### Audit 1 — Bias Mitigator efficacy on a VADER pipeline
 
-Top-K = 0.20, bootstrap reps = 1000, permutation reps = 10,000.
+Top-K = 0.20. Permutation reps = 10,000 (two-sided, under null of
+group-selection independence). Bootstrap CIs are computed at 1000 reps
+and stored in the JSON output, but are not displayed in this table —
+see "Why bootstrap CIs are not displayed" below.
 
-| Axis | Baseline DI [95% CI] perm-p | Post-mitigation DI [95% CI] perm-p | Δ DI |
-|---|:---:|:---:|---:|
-| gender | 1.081 [0.728, 1.668] p=0.70 | 1.026 [0.689, 1.580] p=0.90 | -0.055 |
-| race | 1.271 [0.827, 2.415] p=0.27 | 1.271 [0.798, 2.173] p=0.27 | 0.000 |
-| school_tier | 0.875 [0.572, 1.333] p=0.59 | 0.828 [0.534, 1.202] p=0.50 | -0.047 |
+| Axis | Baseline DI | Baseline perm-p | Post-mitigation DI | Post-mitigation perm-p | Δ DI |
+|---|---:|:---:|---:|:---:|---:|
+| gender | 1.081 | 0.70 | 1.026 | 0.90 | -0.055 |
+| race | 1.271 | 0.27 | 1.271 | 0.27 | 0.000 |
+| school_tier | 0.875 | 0.59 | 0.828 | 0.50 | -0.047 |
 
 VADER is a sentiment baseline, not the patent's NLP architecture. None
 of the Audit 1 cells reach permutation significance at n = 384. The
@@ -154,33 +157,24 @@ pipeline; build one yourself per
 
 ### Audit 2 SBERT — PS four-question extraction
 
-Top-K = 0.30, bootstrap reps = 1000, permutation reps = 10,000.
+Top-K = 0.30. Permutation reps = 10,000.
 
 #### Per-question DI
 
 | Question | gender | race | school_tier |
 |---|:---:|:---:|:---:|
-| poverty | 0.949 [0.713, 1.328] | **0.794** [0.594, 1.167] | 1.054 [0.752, 1.445] |
-| refugee | 1.130 [0.794, 1.534] | 1.141 [0.794, 1.741] | 1.054 [0.768, 1.464] |
-| major_illness | 0.949 [0.648, 1.258] | 0.865 [0.641, 1.242] | 0.974 [0.714, 1.355] |
-| academic_career | 0.885 [0.611, 1.149] | 0.989 [0.752, 1.576] | 1.242 [0.869, 1.775] |
-
-#### Per-question permutation p-values
-
-| Question | gender | race | school_tier |
-|---|:---:|:---:|:---:|
-| poverty | 0.820 | 0.252 | 0.808 |
-| refugee | 0.445 | 0.449 | 0.809 |
-| major_illness | 0.828 | 0.519 | 0.906 |
-| academic_career | 0.505 | 1.000 | 0.176 |
+| poverty | 0.949 (p=0.82) | **0.794** (p=0.25) | 1.054 (p=0.81) |
+| refugee | 1.130 (p=0.45) | 1.141 (p=0.45) | 1.054 (p=0.81) |
+| major_illness | 0.949 (p=0.83) | 0.865 (p=0.52) | 0.974 (p=0.91) |
+| academic_career | 0.885 (p=0.51) | 0.989 (p=1.00) | 1.242 (p=0.18) |
 
 #### Aggregate (patent §530 power-2 sum)
 
-| Axis | DI | 95% CI | perm-p |
-|---|---:|:---:|:---:|
-| gender | 0.855 | [0.596, 1.118] | 0.373 |
-| race | 0.828 | [0.614, 1.220] | 0.371 |
-| school_tier | 1.143 | [0.780, 1.538] | 0.417 |
+| Axis | DI | perm-p |
+|---|---:|:---:|
+| gender | 0.855 | 0.37 |
+| race | 0.828 | 0.37 |
+| school_tier | 1.143 | 0.42 |
 
 The SBERT extractor produces no cells with permutation p < 0.10 at
 n = 384. The strongest point estimate (poverty × race = 0.794, just
@@ -191,36 +185,24 @@ appears to have been a small-corpus artifact.
 
 ### Audit 2 LLM (gpt-4o-mini) — PS four-question extraction
 
-Top-K = 0.30, bootstrap reps = 1000, permutation reps = 10,000.
+Top-K = 0.30. Permutation reps = 10,000.
 
-#### Per-question DI (point + 95% bootstrap CI)
-
-| Question | gender | race | school_tier |
-|---|:---:|:---:|:---:|
-| poverty | 1.130 [0.744, 1.398] | 1.200 [0.793, 1.732] | 1.097 [0.752, 1.415] |
-| refugee | 1.130 [0.688, 1.272] | **0.602** [0.772, 1.663] | 0.938 [0.707, 1.420] |
-| major_illness | 1.091 [0.722, 1.350] | **0.558** [0.710, 1.441] | 0.938 [0.723, 1.374] |
-| academic_career | 1.018 [0.706, 1.300] | 0.865 [0.705, 1.489] | 0.723 [0.451, 1.064] |
-
-#### Per-question two-sided permutation p-values
-
-p-value tests the null that group assignment is independent of
-top-K selection (n_perms = 10,000):
+#### Per-question DI
 
 | Question | gender | race | school_tier |
 |---|:---:|:---:|:---:|
-| poverty | 0.443 | 0.318 | 0.627 |
-| refugee | 0.448 | **0.053** | 0.727 |
-| major_illness | 0.580 | **0.029** | 0.722 |
-| academic_career | 0.911 | 0.525 | 0.110 |
+| poverty | 1.130 (p=0.44) | 1.200 (p=0.32) | 1.097 (p=0.63) |
+| refugee | 1.130 (p=0.45) | **0.602 (p=0.053)** | 0.938 (p=0.73) |
+| major_illness | 1.091 (p=0.58) | **0.558 (p=0.029)** | 0.938 (p=0.72) |
+| academic_career | 1.018 (p=0.91) | 0.865 (p=0.53) | 0.723 (p=0.11) |
 
 #### Aggregate
 
-| Axis | DI | 95% CI | perm-p |
-|---|---:|:---:|:---:|
-| gender | 1.018 | [0.739, 1.355] | 0.913 |
-| race | 1.036 | [0.761, 1.619] | 0.899 |
-| school_tier | **0.650** | [0.508, 1.055] | **0.059** |
+| Axis | DI | perm-p |
+|---|---:|:---:|
+| gender | 1.018 | 0.91 |
+| race | 1.036 | 0.90 |
+| school_tier | **0.650** | **0.059** |
 
 **Headline findings (n = 384):**
 
@@ -241,13 +223,35 @@ disparities under §530's power-2 aggregation; the school_tier
 aggregate signal is driven by academic_career × school_tier (DI = 0.723,
 p = 0.11).
 
-**Reading the bootstrap CIs alongside the permutation p-values.** Even
-at n = 384, several percentile CIs (e.g., refugee/illness race) sit
-above the point estimate they bracket — the known pathology of
-bootstrap percentile intervals on discrete top-K selection statistics.
-The permutation p-values are the appropriate inferential complement;
-they confirm the substantive findings the bootstrap CIs are too
-coarse to characterize.
+**Why bootstrap CIs are not displayed alongside the per-cell DI.** The
+audit harness computes percentile bootstrap CIs (both pooled and
+stratified-by-group variants are implemented) and stores them in the
+JSON output for users who want them. They are not displayed in the
+tables above because the LLM extractor produces near-discrete
+per-question scores (each question's score clusters at 0.0 and 1.0
+with sparse intermediate values), and under top-K selection on
+near-discrete scores at n = 384 with imbalanced groups, both pooled
+and stratified percentile bootstrap distributions are systematically
+biased away from the observed sample DI — the displayed CI would not
+bracket the displayed point estimate. Permutation testing under the
+null of group-selection independence is the appropriate inferential
+tool in this regime; it does not depend on the bootstrap distribution
+and is reported above as the per-cell p-value.
+
+**Multiple comparisons.** Audit 2 reports 12 per-question hypothesis
+tests (4 questions × 3 axes) plus 3 per-axis aggregates per extractor,
+i.e., 15 cells. Under Bonferroni correction at family-wise α = 0.05,
+the corrected per-cell threshold is 0.05 / 15 ≈ 0.0033 — none of the
+observed p-values clear that threshold. Under Benjamini–Hochberg FDR
+control at q = 0.05, the rank-1 cell (major_illness × race, p = 0.029)
+is compared against (1/15) × 0.05 ≈ 0.0033 and again does not clear.
+**The substantive evidence in this audit is therefore the
+direction-consistency of three race-axis cells around DI ≈ 0.55–0.60
+across two corpus sizes (n = 192, n = 384) and two scoring models
+(gpt-5-mini, gpt-4o-mini), not the conventional p-value of any single
+cell.** Users running confirmatory rather than exploratory analyses
+should pre-register specific cells of interest or apply standard
+multiple-comparisons corrections.
 
 ### Cross-extractor observation
 

@@ -1,0 +1,117 @@
+{
+  "source_csv": "out_n384/audit_1/audit_1_per_applicant_scores.csv",
+  "top_frac": 0.2,
+  "bootstrap_reps": 1000,
+  "score_columns": [
+    "score_baseline",
+    "score_mitigated"
+  ],
+  "results_per_score_col": {
+    "score_baseline": {
+      "gender": {
+        "axis": "gender",
+        "group_0_label": "Female",
+        "group_1_label": "Male",
+        "n_group0": 192,
+        "n_group1": 192,
+        "selection_rate_group0": 0.20833333333333334,
+        "selection_rate_group1": 0.19270833333333334,
+        "disparate_impact": 1.0810810810810811,
+        "statistical_parity_difference": 0.015625,
+        "bootstrap_di_point": 1.2647058823529411,
+        "bootstrap_di_ci_lo": 0.7906976744186046,
+        "bootstrap_di_ci_hi": 1.9615384615384617,
+        "bootstrap_n_reps": 1000,
+        "permutation_p_value": 0.6972302769723028,
+        "permutation_n_perms_valid": 10000
+      },
+      "race": {
+        "axis": "race",
+        "group_0_label": "non-White",
+        "group_1_label": "White",
+        "n_group0": 288,
+        "n_group1": 96,
+        "selection_rate_group0": 0.21180555555555555,
+        "selection_rate_group1": 0.16666666666666666,
+        "disparate_impact": 1.2708333333333335,
+        "statistical_parity_difference": 0.045138888888888895,
+        "bootstrap_di_point": 1.5,
+        "bootstrap_di_ci_lo": 0.9484722222222223,
+        "bootstrap_di_ci_hi": 2.8750000000000004,
+        "bootstrap_n_reps": 1000,
+        "permutation_p_value": 0.2713728627137286,
+        "permutation_n_perms_valid": 10000
+      },
+      "school_tier": {
+        "axis": "school_tier",
+        "group_0_label": "lower-resource",
+        "group_1_label": "top-tier",
+        "n_group0": 256,
+        "n_group1": 128,
+        "selection_rate_group0": 0.19140625,
+        "selection_rate_group1": 0.21875,
+        "disparate_impact": 0.875,
+        "statistical_parity_difference": -0.02734375,
+        "bootstrap_di_point": 0.9807692307692307,
+        "bootstrap_di_ci_lo": 0.6323529411764706,
+        "bootstrap_di_ci_hi": 1.6388888888888888,
+        "bootstrap_n_reps": 1000,
+        "permutation_p_value": 0.5948405159484051,
+        "permutation_n_perms_valid": 10000
+      }
+    },
+    "score_mitigated": {
+      "gender": {
+        "axis": "gender",
+        "group_0_label": "Female",
+        "group_1_label": "Male",
+        "n_group0": 192,
+        "n_group1": 192,
+        "selection_rate_group0": 0.203125,
+        "selection_rate_group1": 0.19791666666666666,
+        "disparate_impact": 1.0263157894736843,
+        "statistical_parity_difference": 0.005208333333333343,
+        "bootstrap_di_point": 1.2,
+        "bootstrap_di_ci_lo": 0.75,
+        "bootstrap_di_ci_hi": 1.851851851851852,
+        "bootstrap_n_reps": 1000,
+        "permutation_p_value": 0.9021097890210978,
+        "permutation_n_perms_valid": 10000
+      },
+      "race": {
+        "axis": "race",
+        "group_0_label": "non-White",
+        "group_1_label": "White",
+        "n_group0": 288,
+        "n_group1": 96,
+        "selection_rate_group0": 0.21180555555555555,
+        "selection_rate_group1": 0.16666666666666666,
+        "disparate_impact": 1.2708333333333335,
+        "statistical_parity_difference": 0.045138888888888895,
+        "bootstrap_di_point": 1.3777777777777778,
+        "bootstrap_di_ci_lo": 0.8875000000000002,
+        "bootstrap_di_ci_hi": 2.5185185185185186,
+        "bootstrap_n_reps": 1000,
+        "permutation_p_value": 0.26817318268173185,
+        "permutation_n_perms_valid": 10000
+      },
+      "school_tier": {
+        "axis": "school_tier",
+        "group_0_label": "lower-resource",
+        "group_1_label": "top-tier",
+        "n_group0": 256,
+        "n_group1": 128,
+        "selection_rate_group0": 0.1875,
+        "selection_rate_group1": 0.2265625,
+        "disparate_impact": 0.8275862068965517,
+        "statistical_parity_difference": -0.0390625,
+        "bootstrap_di_point": 0.875,
+        "bootstrap_di_ci_lo": 0.6,
+        "bootstrap_di_ci_hi": 1.425,
+        "bootstrap_n_reps": 1000,
+        "permutation_p_value": 0.5043495650434956,
+        "permutation_n_perms_valid": 10000
+      }
+    }
+  }
+}

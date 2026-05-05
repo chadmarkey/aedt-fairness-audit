@@ -176,6 +176,20 @@ python -m tools.run_audit_2 \
     --out-dir out/audit_2 --extractor llm \
     --llm-provider openai --llm-model gpt-5-mini --bootstrap-reps 1000
 
+# 3b. Permutation tests for the inferential p-values
+#     (the audit-2 runs above produce point estimates and bootstrap CIs;
+#     this step adds the permutation p-values reported in RESULTS.md)
+python -m tools.rebootstrap \
+    --scores out/audit_2/audit_2_per_applicant_scores_sbert.csv \
+    --score-cols poverty refugee major_illness academic_career _total \
+    --top-frac 0.3 --bootstrap-reps 1000 --n-permutations 10000 \
+    --out out/audit_2/audit_2_results_sbert_perm.json
+python -m tools.rebootstrap \
+    --scores out/audit_2/audit_2_per_applicant_scores_llm.csv \
+    --score-cols poverty refugee major_illness academic_career _total \
+    --top-frac 0.3 --bootstrap-reps 1000 --n-permutations 10000 \
+    --out out/audit_2/audit_2_results_llm_perm.json
+
 # 4. Content-equivalence validation
 python -m tools.content_equivalence \
     --corpus synthetic/data/ps_corpus.jsonl \
