@@ -1,7 +1,7 @@
 # Example Results
 
 This file documents output produced by running the toolkit's CLI tools
-on (a) a 192-personal-statement stratified synthetic corpus and (b)
+on (a) a 384-personal-statement stratified synthetic corpus and (b)
 illustrative narrative-tone anchorings. All numbers are reference
 output from running the tools, not findings about any deployed AEDT.
 Specific values vary across runs.
@@ -11,10 +11,10 @@ Two posture sections follow:
 - **Toolkit reference output on illustrative anchorings** —
   multi-instrument and multi-architecture sensitivity demonstrations.
   Anchorings are labeled `instrument_a/b/c/d` to keep the methodology
-  generic; replace with values from your own sentiment instruments
+  generic. Replace with values from your own sentiment instruments
   when running on your own document.
 - **Synthetic-corpus audits** — Audits 1 and 2 plus content-equivalence
-  and counterfactual decomposition diagnostics on the 192-PS stratified
+  and counterfactual decomposition diagnostics on the 384-PS stratified
   corpus.
 
 ---
@@ -84,13 +84,13 @@ group applicants whose narrative is overridden with the high-
 sentiment distribution (the "vendor protected-class control" trigger
 rate) and reports DI at each rate.
 
-Pattern across illustrative anchorings: DI is approximately linear in
-disclosure rate. At realistic protected-class disclosure rates (5–15%
-in many medical-education settings), DI sits well below the 0.80
-EEOC threshold. The threshold typically crosses around 75–90%
-disclosure depending on the anchoring's gap magnitude.
+Illustrative output, on a lexicon-class anchoring (low = 0.18, high =
+0.78). The numbers below are from one representative run committed
+in `examples/reference_outputs/disclosure_sweep/`. Values vary with
+seed and anchoring; the linear-in-disclosure pattern is what to
+expect.
 
-| Disclosure rate | DI (lexicon-class anchoring) | DI status |
+| Disclosure rate | DI | DI status |
 |---:|---:|---|
 | 0% | ~0.10 | outside 4/5 by ~8× |
 | 5% | ~0.15 | outside 4/5 by ~5× |
@@ -100,6 +100,11 @@ disclosure depending on the anchoring's gap magnitude.
 | 75% | ~0.78 | borderline |
 | 90% | ~0.91 | passes |
 | 100% | ~0.97 | passes |
+
+At realistic protected-class disclosure rates (5–15% in many medical-
+education settings), DI sits well below the 0.80 EEOC threshold. The
+threshold typically crosses around 75–90% disclosure depending on
+the anchoring's gap magnitude.
 
 ---
 
@@ -138,8 +143,8 @@ check.
 
 Top-K = 0.20. Permutation reps = 10,000 (two-sided, under null of
 group-selection independence). Bootstrap CIs are computed at 1000 reps
-and stored in the JSON output, but are not displayed in this table —
-see "Why bootstrap CIs are not displayed" below.
+and stored in the JSON output. They are not displayed in this table.
+See "Why bootstrap CIs are not displayed" below.
 
 | Axis | Baseline DI | Baseline perm-p | Post-mitigation DI | Post-mitigation perm-p | Δ DI |
 |---|---:|:---:|---:|:---:|---:|
@@ -180,7 +185,7 @@ The SBERT extractor produces no cells with permutation p < 0.10 at
 n = 384. The strongest point estimate (poverty × race = 0.794, just
 inside the 4/5 lower bound) reaches p = 0.25. The aggregate gender
 finding observed at n = 192 (DI = 0.657, p = 0.12) does not replicate
-at n = 384 (aggregate gender = 0.855, p = 0.37) — the n = 192 result
+at n = 384 (aggregate gender = 0.855, p = 0.37). The n = 192 result
 appears to have been a small-corpus artifact.
 
 ### Audit 2 LLM (gpt-4o-mini) — PS four-question extraction
@@ -204,54 +209,129 @@ Top-K = 0.30. Permutation reps = 10,000.
 | race | 1.036 | 0.90 |
 | school_tier | **0.650** | **0.059** |
 
-**Headline findings (n = 384):**
+**Per-cell findings under gpt-4o-mini scoring (n = 384):**
 
-- **major_illness × race: DI = 0.558, p = 0.029** — significant at
-  conventional p < 0.05.
-- **refugee × race: DI = 0.602, p = 0.053** — borderline significant.
-- **aggregate `_total` × school_tier: DI = 0.650, p = 0.059** — borderline
-  significant; new at n = 384 (was DI = 0.950, p = 0.87 at n = 192).
-- The two race-axis findings are direction-consistent with the n = 192
-  result (refugee 0.507/p=0.07, major_illness 0.545/p=0.08): same
-  direction, similar magnitude, with significance tightening at the
-  larger sample. Robustness across two corpus sizes (n = 192, n = 384)
-  *and* two scoring models (gpt-5-mini, gpt-4o-mini) is the strongest
-  empirical claim the audit makes.
+- major_illness × race: DI = 0.558, p = 0.029 (uncorrected).
+- refugee × race: DI = 0.602, p = 0.053 (uncorrected).
+- aggregate `_total` × school_tier: DI = 0.650, p = 0.059 (uncorrected).
+- These cells are direction-consistent with the n = 192 result
+  scored with gpt-5-mini (refugee 0.507/p=0.07, major_illness
+  0.545/p=0.08): same direction, similar magnitude. Both gpt-5-mini
+  and gpt-4o-mini are OpenAI models, so this is not a cross-family
+  robustness check. The cross-family check with claude-haiku-4-5 is
+  reported below and **does not** reproduce these per-cell findings.
 
 The aggregate `_total` row largely cancels the per-question race
-disparities under §530's power-2 aggregation; the school_tier
-aggregate signal is driven by academic_career × school_tier (DI = 0.723,
-p = 0.11).
+disparities under §530's power-2 aggregation under gpt-4o-mini scoring.
+The school_tier aggregate signal is driven by academic_career ×
+school_tier (DI = 0.723, p = 0.11).
+
+### Audit 2 LLM cross-family robustness check (claude-haiku-4-5 scoring)
+
+The same n = 384 corpus, scored with `claude-haiku-4-5` instead of
+`gpt-4o-mini`, produces a different per-cell pattern. This is an
+important methodological caveat: LLM-based PS-question scoring is
+vendor-dependent.
+
+#### Per-question DI
+
+| Question | gender | race | school_tier |
+|---|:---:|:---:|:---:|
+| poverty | 1.054 (p=0.74) | 1.141 (p=0.46) | 0.902 (p=0.56) |
+| refugee | 1.130 (p=0.44) | **1.409 (p=0.052)** | 1.097 (p=0.63) |
+| major_illness | 0.983 (p=1.00) | 0.903 (p=0.60) | 1.013 (p=1.00) |
+| academic_career | 1.054 (p=0.75) | 0.903 (p=0.61) | **0.698 (p=0.070)** |
+
+#### Aggregate
+
+| Axis | DI | perm-p |
+|---|---:|:---:|
+| gender | 0.949 | 0.82 |
+| race | 1.200 | 0.32 |
+| school_tier | 1.013 | 1.00 |
+
+**What changes under cross-family scoring:**
+
+- **major_illness × race** moves from DI = 0.558 (gpt-4o-mini) to
+  DI = 0.903 (claude-haiku). The disparity is essentially absent
+  under the second scorer.
+- **refugee × race** moves from DI = 0.602 to DI = 1.409. The
+  direction inverts. Under claude-haiku, the non-White stratum is
+  selected at a *higher* rate than the White stratum on this question.
+- **aggregate × school_tier** moves from DI = 0.650 to DI = 1.013.
+  The school_tier signal disappears entirely.
+- **academic_career × school_tier** moves from DI = 0.723 to
+  DI = 0.698. This one cell is similar across families and is the
+  only borderline finding (p of about 0.07) shared between scorers.
+
+**What this means.** The audit's per-cell numerical findings on
+race-axis disparity under LLM-based PS scoring **do not transfer**
+across LLM families. The same patent-specified pipeline, run on the
+same synthetic corpus with the same patent-specified mitigation,
+produces materially different per-cell demographic outcomes depending
+on which LLM answers the four PS questions. The patent does not
+specify which LLM. The cross-family check shows that choice is
+load-bearing.
+
+This is consistent with a peer-review critique that same-family
+generation and scoring confounds "the patent's pipeline produces a
+bias signal" with "the model family encodes stereotypes that surface
+in both generation and scoring." Under cross-family scoring, the
+stereotype-confound explanation is more parsimonious for at least
+some cells. The audit's substantive claim therefore narrows.
+
+- **Original framing (n = 384, single scoring family):** "Three
+  race-axis cells fail the four-fifths range at DI ≈ 0.55–0.60 with
+  direction-consistency across two corpus sizes."
+- **Revised framing (after cross-family check):** "The patent's
+  LLM-based PS-extraction pipeline produces vendor-dependent
+  demographic outcomes. Different LLM families produce different
+  per-cell findings, in some cases on opposite axes or in opposite
+  directions. The patent's specified bias-mitigation step (Claim 1
+  input-side anonymization) does not close the per-cell gaps observed
+  under gpt-4o-mini scoring; cross-family verification of the
+  mitigation step is pending. Applicants are subject to a vendor's
+  undocumented LLM choice, and the patent's specified mitigation
+  does not, on the configurations tested, address that choice."
+
+The counterfactual-decomposition finding (the patent's mitigation
+does not close the gap; see *Counterfactual decomposition* in
+Validation below) was tested under gpt-4o-mini scoring at n = 384.
+The qualitative result (the mitigator does not move per-cell DI) is
+the strongest single finding in the audit at present, and it has not
+been verified under the claude-haiku-4-5 scoring run. That follow-up
+test is a planned next step.
 
 **Why bootstrap CIs are not displayed alongside the per-cell DI.** The
-audit harness computes percentile bootstrap CIs (both pooled and
-stratified-by-group variants are implemented) and stores them in the
-JSON output for users who want them. They are not displayed in the
-tables above because the LLM extractor produces near-discrete
-per-question scores (each question's score clusters at 0.0 and 1.0
-with sparse intermediate values), and under top-K selection on
+audit harness computes percentile bootstrap CIs in two variants
+(pooled and stratified-by-group). It stores them in the JSON output
+for users who want them. They are not displayed in the tables above
+for a specific reason. The LLM extractor produces near-discrete
+per-question scores. Each question's score clusters at 0.0 and 1.0
+with sparse intermediate values. Under top-K selection on
 near-discrete scores at n = 384 with imbalanced groups, both pooled
-and stratified percentile bootstrap distributions are systematically
-biased away from the observed sample DI — the displayed CI would not
-bracket the displayed point estimate. Permutation testing under the
-null of group-selection independence is the appropriate inferential
-tool in this regime; it does not depend on the bootstrap distribution
-and is reported above as the per-cell p-value.
+and stratified percentile bootstrap distributions sit systematically
+away from the observed sample DI. The displayed CI does not bracket
+the displayed point estimate in either case. Permutation testing
+under the null of group-selection independence is the inferential
+tool that holds in this regime. It does not depend on the bootstrap
+distribution. It is reported above as the per-cell p-value.
 
-**Multiple comparisons.** Audit 2 reports 12 per-question hypothesis
-tests (4 questions × 3 axes) plus 3 per-axis aggregates per extractor,
-i.e., 15 cells. Under Bonferroni correction at family-wise α = 0.05,
-the corrected per-cell threshold is 0.05 / 15 ≈ 0.0033 — none of the
-observed p-values clear that threshold. Under Benjamini–Hochberg FDR
-control at q = 0.05, the rank-1 cell (major_illness × race, p = 0.029)
-is compared against (1/15) × 0.05 ≈ 0.0033 and again does not clear.
-**The substantive evidence in this audit is therefore the
-direction-consistency of three race-axis cells around DI ≈ 0.55–0.60
-across two corpus sizes (n = 192, n = 384) and two scoring models
-(gpt-5-mini, gpt-4o-mini), not the conventional p-value of any single
-cell.** Users running confirmatory rather than exploratory analyses
-should pre-register specific cells of interest or apply standard
-multiple-comparisons corrections.
+**Multiple comparisons.** Audit 2 reports 15 hypothesis tests per
+extractor (12 per-question plus 3 aggregate). Across two scorers
+that is 30 tests. Under Bonferroni correction at family-wise α = 0.05,
+the corrected per-cell threshold is α / k. Under Benjamini–Hochberg
+FDR at q = 0.05, the rank-1 threshold is the same. None of the
+observed p-values clear either correction. **The substantive evidence
+in this audit is not any individual cell's significance.** It is two
+qualitative observations. First, under at least one LLM scoring
+family, the patent's pipeline produces per-cell DIs outside the 4/5
+range. Second, the cross-family check shows those per-cell findings
+do not stably transfer across LLM families. Different families
+produce different patterns. Users running confirmatory rather than
+exploratory analyses should pre-register specific cells of interest,
+apply standard multiple-comparisons corrections, and run cross-family
+robustness checks before drawing inferential conclusions.
 
 ### Cross-extractor observation
 
@@ -343,7 +423,7 @@ example PS openings before and after the BiasMitigator:
 The mitigator removes person names, locations, school names, and
 pronouns. It does not remove the narrative arc, the family
 configuration, the kinds of activities described, or the sentence-level
-register — those carry the residual demographic signal the LLM picks
+register. Those carry the residual demographic signal the LLM picks
 up.
 
 ---

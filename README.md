@@ -7,8 +7,8 @@ Fairness measurement library for automated employment decision tools.
 This is software for measuring fairness in the AI tools that screen job
 applications.
 
-Some companies sell AI that reads documents — résumés, personal
-statements, recommendation letters — and ranks candidates for human
+Some companies sell AI that reads documents (résumés, personal
+statements, recommendation letters) and ranks candidates for human
 reviewers. A 2025 U.S. patent (No. 12,265,502 B1) describes one such
 system in detail, including how it scores the personal statement and
 how it tries to remove bias.
@@ -28,29 +28,44 @@ ratio below 0.80, or above 1.25 in the reverse direction).
 ### What happens when you run it
 
 These are example numbers from a 384-PS synthetic corpus covering 24
-demographic combinations. Specific values vary across runs; the
-patterns below are what to expect, and they replicate at a smaller
-n=192 corpus generated under a different scoring model.
+demographic combinations. Specific values vary across runs.
 
-- The patent's personal-statement extractor produced two race-axis
-  per-question selection-rate ratios that reach conventional or
-  borderline statistical significance under permutation testing:
-  major_illness × race at 0.558 (p = 0.029) and refugee × race at
-  0.602 (p = 0.053). The aggregate `_total` × school_tier ratio of
-  0.650 (p = 0.059) is borderline-significant.
-- **Running the patent's own bias-removal step did not close the gap.**
-  After deleting names, schools, and other demographic identifiers,
-  the major_illness × race ratio is exactly unchanged (Δ = 0.000) and
-  the refugee × race ratio gets *stronger* (Δ = -0.064). The patent's
-  specified mitigation does not reach the within-content signal the
-  LLM extractor is reading.
-- The screening-simulation tool, run on illustrative sentiment
-  anchorings, produced selection-rate ratios outside the four-fifths
-  range under every scoring method tested (linear, logistic
-  regression, patent §530 power-of-2 aggregation, power-of-3
-  aggregation). When narrative sentiment alone was held constant
-  across groups in a sentiment-only counterfactual, the ratios
-  returned to within sampling noise of parity.
+The honest read of the audit findings, after running a cross-family
+robustness check, is two qualitative observations:
+
+- **The patent's pipeline produces vendor-dependent demographic
+  outcomes.** Under one LLM-based PS-extraction scorer (gpt-4o-mini),
+  three cells produced selection-rate ratios outside the four-fifths
+  range at uncorrected p < 0.10 (race × major_illness, race × refugee,
+  school_tier × aggregate). Under a different LLM family
+  (claude-haiku-4-5) on the same corpus, those per-cell findings
+  largely disappear or invert. Under claude-haiku, refugee × race
+  flips from DI = 0.60 to DI = 1.41, in the opposite direction. The
+  patent does not specify which LLM is used. Applicants are therefore
+  subject to a vendor's undocumented model choice, and that choice
+  changes the demographic outcome.
+- **The patent's own bias-removal step did not close the per-cell
+  gaps under gpt-4o-mini scoring.** Applying the patent's input-side
+  anonymization leaves the major_illness × race ratio exactly
+  unchanged and *widens* the refugee × race ratio. The mitigator does
+  not reach the within-content signal the LLM extractor is reading.
+  Cross-family verification of the mitigation step (running the
+  counterfactual decomposition under claude-haiku-4-5 scoring) is a
+  planned next step.
+
+Under conventional multiple-comparisons correction (Bonferroni or
+Benjamini–Hochberg), no individual cell reaches corrected significance.
+The audit reports per-cell p-values uncorrected and explicitly notes
+that the substantive findings are the qualitative observations above,
+not any single cell's p-value.
+
+The screening-simulation tool, run on illustrative sentiment
+anchorings, produced selection-rate ratios outside the four-fifths
+range under every scoring method tested (linear, logistic regression,
+patent §530 power-of-2 aggregation, power-of-3 aggregation). When
+narrative sentiment alone was held constant across groups in a
+sentiment-only counterfactual, the ratios returned to within sampling
+noise of parity.
 
 The technical results, with confidence intervals and methodology, are
 in [`RESULTS.md`](RESULTS.md). The audit code is in `tools/`. The
@@ -73,8 +88,8 @@ any specific deployed AEDT.
 - Findings demonstrate that adverse-impact signals can emerge under
   plausible configurations of the patent's specified architecture on
   synthetic test data. They do not, and cannot, prove that any
-  specific deployed AEDT — including any product made by the patent's
-  assignee — implements the architecture in the same way the toolkit
+  specific deployed AEDT (including any product made by the patent's
+  assignee) implements the architecture in the same way the toolkit
   does, uses the same parameters, or produces the same outputs.
 - The U.S. EEOC's four-fifths rule (29 C.F.R. § 1607) is a
   regulatory screening heuristic for *adverse impact*, used by
@@ -107,6 +122,34 @@ pipeline replicating the architecture disclosed in U.S. Patent No.
 12,265,502 B1 from off-the-shelf libraries.
 
 Contributions and critiques are welcome via Issues and pull requests.
+A running record of substantive methodology revisions made after the
+initial public release lives in [`CHANGELOG.md`](CHANGELOG.md),
+including a 2026-05-05 cross-family robustness check that narrowed
+the audit's substantive claim and is described in full in
+[`RESULTS.md`](RESULTS.md).
+
+## Why this is public
+
+This repo is public because there was no other way to do it. I asked
+Thalamus, the patent's assignee, for the data and processing details
+on their pipeline. The vehicle was a Data Subject Access Request under
+New Hampshire's Privacy Act, RSA 507-H. They declined at the 45-day
+deadline. The grounds were jurisdictional. RSA 507-H sets volume
+thresholds for which companies the law reaches, and the company argued
+that too few of New Hampshire's 1.4 million residents use their
+products to clear those thresholds. So the privacy law that should
+have governed the request did not apply. I appealed under §507-H:4(IV)
+on May 4, 2026. That appeal is its own record now.
+
+What was left was to rebuild the patent's pipeline from public
+components and audit it. Patent text, off-the-shelf libraries,
+synthetic test data. That is the toolkit.
+
+Critiques and replication failures are welcome. File them as GitHub
+Issues. The repo has already narrowed its substantive claims in
+response to one external critique (see [`CHANGELOG.md`](CHANGELOG.md)).
+I expect more of that. The work gets better when the methodology
+iterates in public.
 
 ## Components
 
@@ -160,7 +203,7 @@ OPENAI_API_KEY=sk-... python -m tools.generate_ps_corpus \
     --provider openai --model gpt-4o-mini --instances-per-cell 4 \
     --out synthetic/data/ps_corpus.jsonl
 
-# 2. Audit 1 — Bias Mitigator efficacy on a VADER baseline pipeline
+# 2. Audit 1: Bias Mitigator efficacy on a VADER baseline pipeline
 python -m tools.run_audit_1 \
     --corpus synthetic/data/ps_corpus.jsonl \
     --pipeline examples.example_pipeline:score_texts \
@@ -220,8 +263,8 @@ python -m plots.plot_counterfactual_decomposition \
 
 Compare your `out/` figures against
 `examples/reference_outputs/` for sanity. Specific numerical values
-will not match exactly — synthetic-PS generation is stochastic, model
-outputs vary across API calls, and bootstrap seeds drift — but the
+will not match exactly. Synthetic-PS generation is stochastic, model
+outputs vary across API calls, and bootstrap seeds drift. But the
 qualitative patterns (which axes raise an adverse-impact flag, which
 direction the mitigator moves the ratios, the ordering of the
 content-equivalence nesting levels) should reproduce. If they do not,
@@ -230,9 +273,9 @@ that is itself an audit-worthy finding.
 ### Screener-model simulation
 
 The screener-model tools do not require the synthetic-PS corpus. They
-take a JSON of sentiment-instrument anchorings — one entry per
+take a JSON of sentiment-instrument anchorings (one entry per
 sentiment instrument, naming the score it produces on a low-tone vs. a
-high-tone variant of the same content — and use those anchorings to
+high-tone variant of the same content) and use those anchorings to
 generate stratified synthetic applicants for a top-K invite
 simulation. The example anchorings live in
 [`examples/screening_anchorings_template.json`](examples/screening_anchorings_template.json);
@@ -299,7 +342,7 @@ JSON output.
 **What it does:** Generates a set of fake personal statements that span
 different demographic combinations (race, gender, school tier) while
 keeping the underlying narrative theme consistent within each group of
-applicants. Used as test input for the audits below — actual applicant
+applicants. Used as test input for the audits below. Actual applicant
 text is never needed.
 
 ```bash
@@ -311,9 +354,9 @@ OPENAI_API_KEY=sk-... python -m tools.generate_ps_corpus \
 ### Audit 1 — Bias Mitigator efficacy — `tools/run_audit_1.py`
 
 **What it does:** Tests whether the patent's bias-removal step actually
-removes bias. Runs the same scoring pipeline twice — once on raw
-applicant text, once after applying the patent's input-side
-detect-and-replace step — and compares whether the demographic gaps
+removes bias. Runs the same scoring pipeline twice. Once on raw
+applicant text. Once after applying the patent's input-side
+detect-and-replace step. Compares whether the demographic gaps
 shrink. Requires a user-supplied scoring function via the `pipeline_fn`
 interface; see [`PIPELINE_BUILD_GUIDE.md`](PIPELINE_BUILD_GUIDE.md).
 
@@ -353,7 +396,7 @@ python -m tools.run_audit_2 \
 multiple sentiment tools (VADER, RoBERTa, LLM judge), and flags any
 section that is the lowest-scoring section under every tool. This is
 the signal a "section-aware" AI screener would pick up if a single
-section of an otherwise-positive document carries a lower tone — for
+section of an otherwise-positive document carries a lower tone, for
 example, a paragraph describing a leave of absence in an otherwise
 laudatory recommendation letter.
 
@@ -367,8 +410,8 @@ python -m tools.run_paragraph_audit \
 
 ### Dilution test — `tools/run_dilution_test.py`
 
-**What it does:** Compares two narrative variants — a low-tone version
-and a high-tone version of the same content — when scored as standalone
+**What it does:** Compares two narrative variants (a low-tone version
+and a high-tone version of the same content) when scored as standalone
 excerpts vs when embedded in a longer surrounding document. Tests
 whether the score difference disappears when the variant is buried in
 context. The dilution percentage depends on which sentiment tool is
@@ -574,8 +617,8 @@ is designed to make process-version tracking auditable.
 
 The fairness-metric definitions implemented in `audit/` follow the AI
 Fairness 360 (AIF360) conventions. AIF360 itself is *not* a runtime
-dependency — the metrics are reimplemented here in numpy/pandas to keep
-installation light — but the mathematical definitions and naming follow
+dependency. The metrics are reimplemented here in numpy/pandas to keep
+installation light. The mathematical definitions and naming follow
 AIF360's `ClassificationMetric` class.
 
 Specifically, this library replicates:
@@ -596,7 +639,7 @@ Detecting, Understanding, and Mitigating Unwanted Algorithmic Bias.*
 arXiv:1810.01943. [github.com/Trusted-AI/AIF360](https://github.com/Trusted-AI/AIF360)
 
 If you prefer to use AIF360 directly rather than the reimplementations
-here, the metric definitions are bytewise compatible — substitute
+here, the metric definitions are bytewise compatible. Substitute
 `aif360.metrics.ClassificationMetric` calls in your own code where this
 library uses its functions of the same names.
 
@@ -642,7 +685,7 @@ the shipped synthetic corpus and a gpt-4o-mini LLM extractor, two
 race-axis cells reach significance or borderline significance under
 permutation testing: major_illness × race at p = 0.029 and refugee ×
 race at p = 0.053. The same cells were marginal (p ≈ 0.07–0.08) at
-n = 192 with a gpt-5-mini scoring model — direction-consistent across
+n = 192 with a gpt-5-mini scoring model. Direction-consistent across
 two corpus sizes and two scoring models, with significance tightening
 at the larger sample. Users running on smaller corpora should expect
 the percentile bootstrap to be a stability indicator rather than a
@@ -677,9 +720,9 @@ parameters used.
 **Two extractor variants are not exhaustive.** The SBERT and LLM
 extractors represent two reasonable instantiations of "users can apply
 NLP to read through personal statement of each applicant" (col. 10).
-Other architectures consistent with the patent — hybrid
+Other architectures consistent with the patent (hybrid
 retrieval-augmented systems, fine-tuned classifiers, ensemble
-approaches — are not tested. Findings that hold across SBERT and LLM
+approaches) are not tested. Findings that hold across SBERT and LLM
 extractors are more robust than findings that appear in only one.
 
 **The bias mitigator's failure to close gaps is a result, not a bug.**
@@ -696,8 +739,8 @@ find approaches that perform differently.
 **Findings are about an architecture class, not a specific product.**
 This toolkit tests the architecture disclosed in U.S. Patent No.
 12,265,502 B1 as implemented from public components. It does not, and
-cannot, claim that any specific deployed AEDT — including any product
-made by the patent's assignee — implements the architecture in the
+cannot, claim that any specific deployed AEDT (including any product
+made by the patent's assignee) implements the architecture in the
 same way the toolkit does, uses the same parameters, or produces the
 same outputs. Inference from toolkit results to specific deployed
 products requires independent evidence about those products.
