@@ -610,15 +610,23 @@ should be read as "this is what happens when the patent's architecture
 is run on a corpus designed to isolate demographic markers from
 content," not as a population-level claim about real applicant text.
 
-**Bootstrap CIs behave poorly on discrete top-K selection.** With
-group sizes near 96 and binary top-K decisions, the disparate-impact
-ratio is a discrete-valued statistic. Percentile bootstrap intervals
-can sit above the point estimate or fail to bracket it cleanly. The
-point DI is the substantive fairness measurement; the CI characterizes
-resampling stability rather than providing standard inferential
-coverage. Users running this on their own corpora should consider BCa
-intervals, permutation tests against the null of group exchangeability,
-or larger group sizes.
+**Bootstrap CIs behave poorly on discrete top-K selection; permutation
+tests are reported as the inferential complement.** With group sizes
+near 96 and binary top-K decisions, the disparate-impact ratio is a
+discrete-valued statistic. Percentile bootstrap intervals can sit
+above the point estimate or fail to bracket it cleanly. The audit
+runners therefore now also support a two-sided permutation test under
+the null of group-selection independence (`--n-permutations` flag on
+`tools/rebootstrap.py`); RESULTS.md reports those p-values alongside
+the bootstrap CIs at 10,000 permutations. At n = 192 with the shipped
+synthetic corpus, point estimates that sit outside the 4/5 range
+generally do not reach conventional p < 0.05 significance under
+permutation; the strongest cells (LLM extractor's race-axis findings
+on refugee and major_illness) reach p ≈ 0.07–0.08. The substantive
+finding is direction-consistency across questions despite limited
+per-question power, not any single cell's significance. Larger
+corpora (the toolkit supports `--instances-per-cell N` to scale up
+the synthetic generator) materially help.
 
 **No ground truth for the four PS questions.** Audit 2 measures
 whether the patent's four-question extractor produces systematically

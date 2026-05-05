@@ -131,6 +131,95 @@ def bootstrap_di(
     }
 
 
+def permutation_test_di(
+    scores: np.ndarray,
+    group: np.ndarray,
+    top_frac: float,
+    n_perms: int = 5000,
+    seed: int = 0,
+    tail: str = "two-sided",
+) -> Dict[str, float]:
+    """Permutation test for DI under the null of group-selection independence.
+
+    Procedure: hold the score-derived top-K selection fixed, permute the
+    group labels n_perms times, and compute DI under each permutation.
+    Compare the observed DI's distance from parity (1.0) to the null
+    distribution.
+
+    This complements ``bootstrap_di`` — bootstrap measures resampling
+    stability of the DI estimate, while permutation tests whether the
+    observed DI is unusual under random group reassignment. Permutation
+    handles small-n discrete top-K selection more cleanly than the
+    percentile bootstrap, which can place CI bounds on the wrong side
+    of the point estimate when the underlying statistic is discrete.
+
+    Args:
+        scores: per-applicant score array
+        group: binary {0, 1, -1=excluded} group assignment
+        top_frac: top-K selection fraction (must match the audit's setting)
+        n_perms: number of permutation reps (5000 is the default; higher
+            for more precise small-tail p-values)
+        seed: base seed for reproducibility
+        tail: "two-sided" (test |DI - 1.0| as far as observed) or
+            "lower" (test DI as far below 1.0 as observed) or "upper"
+
+    Returns:
+        Dict with observed_di, p_value, n_perms_run, n_perms_valid,
+        n_extreme, and the test description.
+    """
+    rng = np.random.default_rng(seed)
+    mask = group >= 0
+    s = scores[mask]
+    g = group[mask].copy()
+
+    sel = top_k_selection(s, top_frac)
+    obs = disparate_impact(sel, g)["disparate_impact"]
+
+    if np.isnan(obs):
+        return {
+            "observed_di": float("nan"),
+            "p_value": float("nan"),
+            "n_perms_run": int(n_perms),
+            "n_perms_valid": 0,
+            "n_extreme": 0,
+            "tail": tail,
+            "test": "permutation under null of group-selection independence",
+        }
+
+    obs_dist = abs(obs - 1.0)
+    n_extreme = 0
+    n_valid = 0
+    for _ in range(n_perms):
+        g_perm = rng.permutation(g)
+        m = disparate_impact(sel, g_perm)
+        di_perm = m["disparate_impact"]
+        if np.isnan(di_perm):
+            continue
+        n_valid += 1
+        if tail == "two-sided":
+            if abs(di_perm - 1.0) >= obs_dist:
+                n_extreme += 1
+        elif tail == "lower":
+            if di_perm <= obs:
+                n_extreme += 1
+        elif tail == "upper":
+            if di_perm >= obs:
+                n_extreme += 1
+        else:
+            raise ValueError(f"Unknown tail: {tail}")
+
+    p_value = (n_extreme + 1) / (n_valid + 1)  # standard +1 small-sample correction
+    return {
+        "observed_di": float(obs),
+        "p_value": float(p_value),
+        "n_perms_run": int(n_perms),
+        "n_perms_valid": int(n_valid),
+        "n_extreme": int(n_extreme),
+        "tail": tail,
+        "test": "permutation under null of group-selection independence",
+    }
+
+
 def axis_audit(
     df: pd.DataFrame,
     score_col: str,
@@ -138,6 +227,8 @@ def axis_audit(
     top_frac: float = 0.2,
     n_bootstrap: int = 200,
     bootstrap_seed: int = 0,
+    n_permutations: int = 0,
+    permutation_seed: int = 0,
     axes_config: Optional[Dict[str, Dict[str, List[str]]]] = None,
 ) -> Dict[str, Dict[str, float]]:
     """Run a per-axis fairness audit on a single score column.
@@ -150,10 +241,16 @@ def axis_audit(
         top_frac: top-K selection fraction (e.g., 0.2 = top 20%)
         n_bootstrap: bootstrap replicates per axis
         bootstrap_seed: base seed for bootstrap reproducibility
+        n_permutations: if > 0, run a permutation test alongside the
+            bootstrap CI; reports the two-sided p-value under the null
+            of group-selection independence
+        permutation_seed: base seed for the permutation test
         axes_config: per-axis binarization config; default uses DEFAULT_AXES
 
     Returns:
-        Dict mapping axis_name → {point DI, CI, raw selection rates, n per group}
+        Dict mapping axis_name → {point DI, CI, raw selection rates, n per
+        group}, plus optional permutation_p_value and related fields when
+        n_permutations > 0.
     """
     axes_config = axes_config if axes_config is not None else DEFAULT_AXES
     scores = df[score_col].to_numpy()
@@ -170,7 +267,7 @@ def axis_audit(
             scores, group, top_frac=top_frac,
             n_reps=n_bootstrap, seed=bootstrap_seed,
         )
-        results[axis_name] = {
+        row = {
             "axis": axis_name,
             "group_0_label": cfg["group_0_label"],
             "group_1_label": cfg["group_1_label"],
@@ -180,4 +277,13 @@ def axis_audit(
             "bootstrap_di_ci_hi": ci["ci_hi"],
             "bootstrap_n_reps": ci["n_reps"],
         }
+        if n_permutations > 0:
+            perm = permutation_test_di(
+                scores, group, top_frac=top_frac,
+                n_perms=n_permutations, seed=permutation_seed,
+                tail="two-sided",
+            )
+            row["permutation_p_value"] = perm["p_value"]
+            row["permutation_n_perms_valid"] = perm["n_perms_valid"]
+        results[axis_name] = row
     return results

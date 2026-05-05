@@ -48,6 +48,11 @@ def main() -> int:
     )
     ap.add_argument("--top-frac", type=float, default=0.3)
     ap.add_argument("--bootstrap-reps", type=int, default=1000)
+    ap.add_argument("--n-permutations", type=int, default=0,
+                    help="If > 0, run a two-sided permutation test alongside "
+                         "the bootstrap CI; reports a p-value under the null "
+                         "of group-selection independence (recommended at "
+                         "small n where the percentile bootstrap is fragile)")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
@@ -73,6 +78,8 @@ def main() -> int:
             top_frac=args.top_frac,
             n_bootstrap=args.bootstrap_reps,
             bootstrap_seed=args.seed,
+            n_permutations=args.n_permutations,
+            permutation_seed=args.seed,
         )
         out["results_per_score_col"][col] = res
 
@@ -89,7 +96,10 @@ def main() -> int:
             di = m["disparate_impact"]
             ci_lo = m["bootstrap_di_ci_lo"]
             ci_hi = m["bootstrap_di_ci_hi"]
-            print(f"  {axis:<14} DI={di:.3f}  95% CI [{ci_lo:.3f}, {ci_hi:.3f}]")
+            line = f"  {axis:<14} DI={di:.3f}  95% CI [{ci_lo:.3f}, {ci_hi:.3f}]"
+            if "permutation_p_value" in m:
+                line += f"  perm-p={m['permutation_p_value']:.4f}"
+            print(line)
     return 0
 
 

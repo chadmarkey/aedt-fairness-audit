@@ -131,13 +131,19 @@ tiers × 2 instances. Generated with `tools.generate_ps_corpus` using
 
 ### Audit 1 — Bias Mitigator efficacy on a VADER pipeline
 
-Top-K = 0.20, bootstrap reps = 1000.
+Top-K = 0.20, bootstrap reps = 1000, permutation reps = 10,000.
 
-| Axis | Baseline DI | 95% CI | Post-mitigation DI | 95% CI | Δ DI |
-|---|---:|:---:|---:|:---:|---:|
-| gender | 1.111 | [0.542, 2.034] | 1.000 | [0.523, 1.795] | -0.111 |
-| race | 1.074 | [0.525, 2.389] | 0.933 | [0.484, 2.063] | -0.141 |
-| school_tier | 1.611 | [0.837, 3.960] | 1.400 | [0.714, 3.225] | -0.211 |
+| Axis | Baseline DI [95% CI] perm-p | Post-mitigation DI [95% CI] perm-p | Δ DI |
+|---|:---:|:---:|---:|
+| gender | 1.111 [0.542, 2.034] p=0.72 | 1.000 [0.523, 1.795] p=1.00 | -0.111 |
+| race | 1.074 [0.525, 2.389] p=0.84 | 0.933 [0.484, 2.063] p=1.00 | -0.141 |
+| school_tier | 1.611 [0.837, 3.960] p=0.11 | 1.400 [0.714, 3.225] p=0.24 | -0.211 |
+
+None of the Audit 1 baseline cells reach permutation significance at
+n = 192. The school_tier baseline point estimate (1.611, outside the
+4/5 upper bound of 1.25) is the closest to significance (p = 0.11) and
+moves toward parity post-mitigation, but the sample is underpowered
+to confirm the effect inferentially.
 
 VADER is a sentiment baseline, not the patent's NLP architecture. All
 three axes drift toward parity post-mitigation; baselines are within
@@ -147,7 +153,9 @@ patent-faithful pipeline; build one yourself per
 
 ### Audit 2 SBERT — PS four-question extraction
 
-Top-K = 0.30, bootstrap reps = 1000.
+Top-K = 0.30, bootstrap reps = 1000, permutation reps = 10,000.
+
+#### Per-question DI
 
 | Question | gender | race | school_tier |
 |---|:---:|:---:|:---:|
@@ -156,21 +164,34 @@ Top-K = 0.30, bootstrap reps = 1000.
 | major_illness | 1.231 [0.830, 1.981] | 1.048 [0.654, 1.969] | 1.111 [0.660, 1.804] |
 | **academic_career** | **0.758** [0.457, 1.174] | 1.278 [0.717, 2.230] | 0.950 [0.611, 1.579] |
 
-Aggregate (patent §530 power-2 sum):
+#### Per-question permutation p-values
 
-| Axis | DI | 95% CI |
-|---|---:|:---:|
-| **gender** | **0.657** | [0.432, 1.117] |
-| race | 1.048 | [0.595, 1.737] |
-| school_tier | 1.026 | [0.644, 1.683] |
+| Question | gender | race | school_tier |
+|---|:---:|:---:|:---:|
+| poverty | 0.434 | 0.867 | 1.000 |
+| refugee | 0.871 | 0.862 | 0.415 |
+| major_illness | 0.346 | 0.855 | 0.742 |
+| academic_career | 0.269 | 0.314 | 0.867 |
 
-Aggregate gender DI sits outside EEOC's four-fifths range at point estimate; CI crosses 1.0 at
-n=192. Driver: academic_career question (women selected at 76% rate of
-men).
+#### Aggregate (patent §530 power-2 sum)
+
+| Axis | DI | 95% CI | perm-p |
+|---|---:|:---:|:---:|
+| **gender** | **0.657** | [0.432, 1.117] | 0.121 |
+| race | 1.048 | [0.595, 1.737] | 0.860 |
+| school_tier | 1.026 | [0.644, 1.683] | 1.000 |
+
+Aggregate gender DI = 0.657 is the SBERT extractor's strongest signal
+at point estimate and reaches p = 0.12 under permutation testing —
+suggestive but not conventionally significant at n = 192. The
+academic_career question is the per-question driver (DI = 0.758,
+p = 0.27).
 
 ### Audit 2 LLM (gpt-5-mini) — PS four-question extraction
 
-Top-K = 0.30, bootstrap reps = 1000.
+Top-K = 0.30, bootstrap reps = 1000, permutation reps = 10,000.
+
+#### Per-question DI (point + 95% bootstrap CI)
 
 | Question | gender | race | school_tier |
 |---|:---:|:---:|:---:|
@@ -179,23 +200,44 @@ Top-K = 0.30, bootstrap reps = 1000.
 | major_illness | 1.148 [0.682, 1.554] | **0.545** [0.592, 1.690] | 0.881 [0.611, 1.537] |
 | academic_career | 1.071 [0.630, 1.491] | **0.587** [0.592, 1.645] | 0.950 [0.613, 1.506] |
 
-Aggregate:
+#### Per-question two-sided permutation p-values
 
-| Axis | DI | 95% CI |
-|---|---:|:---:|
-| gender | 1.000 | [0.649, 1.522] |
-| race | 0.875 | [0.615, 1.667] |
-| school_tier | 0.950 | [0.601, 1.571] |
+p-value tests the null that group assignment is independent of
+top-K selection (n_perms = 10,000):
 
-Three of four questions show race DI well below 4/5 at point estimate.
-Aggregate masks this because per-question disparities partially cancel.
+| Question | gender | race | school_tier |
+|---|:---:|:---:|:---:|
+| poverty | 1.000 | 1.000 | 1.000 |
+| refugee | 0.748 | **0.071** | 1.000 |
+| major_illness | 0.532 | **0.083** | 0.618 |
+| academic_career | 0.752 | 0.157 | 0.871 |
 
-**Bootstrap CI artifact.** Several CI intervals (refugee/illness/
-academic_career race) sit *above* the point estimate. With binary top-K
-selection at n=192 and group sizes ~96, single-applicant reshuffles
-move the DI ratio in chunks; the bootstrap distribution does not
-bracket the actual sample DI cleanly. The point DI is the relevant
-fairness measurement; the CI characterizes resampling stability.
+#### Aggregate
+
+| Axis | DI | 95% CI | perm-p |
+|---|---:|:---:|:---:|
+| gender | 1.000 | [0.649, 1.522] | 1.000 |
+| race | 0.875 | [0.615, 1.667] | 0.720 |
+| school_tier | 0.950 | [0.601, 1.571] | 0.872 |
+
+Three of four race-axis questions sit at DI ≈ 0.51–0.59 — point estimates
+outside the four-fifths range. Two of those three (refugee, major_illness)
+reach marginal permutation significance (p ≈ 0.07–0.08); academic_career
+shows the same direction at p = 0.16. The aggregate `_total` row masks
+the per-question pattern because the four questions partially cancel
+when summed under §530's power-2 aggregation.
+
+**Reading the bootstrap CIs alongside the permutation p-values.** With
+n = 192, group sizes ~96, and binary top-K selection, the disparate-
+impact ratio is a discrete-valued statistic. Several percentile CIs
+(refugee/illness/academic_career race) sit *above* the point estimate
+they bracket — a known pathology of bootstrap percentile intervals on
+small-n discrete statistics. The permutation p-values are the
+appropriate inferential complement here: at this sample size, the
+point estimates are descriptively striking but individually
+underpowered. The substantive finding is the *direction-consistency*
+across three race-axis questions despite limited per-question power,
+not any single cell's significance.
 
 ### Cross-extractor observation
 
