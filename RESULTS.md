@@ -112,9 +112,9 @@ fresh JSON + PNG/PDF figures to user-supplied `--out-dir` paths.
 | Artifact | Reference output path |
 |---|---|
 | Corpus generator | `tools/generate_ps_corpus.py` |
-| Audit 1 (VADER + Claim 1 mitigator) | `examples/reference_outputs/audit_1/audit_1_reps1000.json` |
-| Audit 2 SBERT | `examples/reference_outputs/audit_2/audit_2_results_sbert_reps1000.json` |
-| Audit 2 LLM (small open-weights or LLM-judge model) | `examples/reference_outputs/audit_2/audit_2_results_llm_reps1000.json` |
+| Audit 1 (VADER + Claim 1 mitigator) | `examples/reference_outputs/audit_1/audit_1_results.json` (point + bootstrap CI); `audit_1_reps1000_perm.json` (pooled bootstrap + permutation); `audit_1_strat_perm.json` (stratified bootstrap + permutation) |
+| Audit 2 SBERT | `examples/reference_outputs/audit_2/audit_2_results_sbert.json` (point + bootstrap CI); `audit_2_results_sbert_reps1000_perm.json` (pooled + perm); `audit_2_results_sbert_strat_perm.json` (stratified + perm) |
+| Audit 2 LLM | `examples/reference_outputs/audit_2/audit_2_results_llm.json` (point + bootstrap CI); `audit_2_results_llm_reps1000_perm.json` (pooled + perm); `audit_2_results_llm_strat_perm.json` (stratified + perm) |
 | Content equivalence | `examples/reference_outputs/content_equivalence/results.json` |
 | Counterfactual decomposition | `examples/reference_outputs/counterfactual/counterfactual_decomposition.json` |
 | Screening with counterfactual (multi-model) | `examples/reference_outputs/screening_counterfactual/results_multimodel.json` |
