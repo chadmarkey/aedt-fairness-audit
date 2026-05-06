@@ -6,6 +6,105 @@ reconstruct how it got here without spelunking through git log.
 
 The commit history is not squashed. Every change is recoverable.
 
+## 2026-05-06 (continued) — Prompt-design diagnostic, cross-extractor disagreement, doc freshness
+
+After the cross-generator validation landed, a closer audit of the
+corpus generator surfaced that the corpus prompt itself is encoding
+school-tier-correlated content beyond the school name. Two locations
+in `synthetic/ps_generator.py`:
+
+- `SCHOOL_TIER_DESCRIPTIONS["top_20"]` (lines 109–115): includes the
+  directive "the school cue should be subtle (a research lab, a
+  faculty mentor, an institution-specific program), not a brag." The
+  mid_tier and lower_tier descriptions don't have an analogous content
+  directive.
+- The `PROMPT_TEMPLATE` writing-style instruction (line 97) tells the
+  generating LLM to "Adopt a stylistic voice plausible for the
+  assigned profile. Vocabulary register, sentence cadence, and
+  narrative framing should differ across profiles even when content
+  is identical."
+
+A token-frequency diagnostic on the existing gpt-4o-mini and
+claude-haiku-4-5 corpora confirms the hypothesis. In seeds where
+ground truth says NOT pursuing academic career (control_neutral,
+immigration_signal, poverty_signal), top_20 PSs contain academic-
+register tokens (research, lab, faculty, mentor, scientist, PhD,
+manuscript, …) **1.4× to 3.6× more often** than lower_tier PSs.
+The illness_signal seed is balanced across tiers because the seed
+itself dictates academic content. Ratio summary by (generator × seed):
+
+| generator | seed | top_20 / lower_tier density ratio |
+|---|---|---:|
+| gpt-4o-mini | control_neutral | 3.6× |
+| gpt-4o-mini | immigration_signal | 2.3× |
+| gpt-4o-mini | poverty_signal | 2.0× |
+| claude-haiku-4-5 | control_neutral | 1.9× |
+| claude-haiku-4-5 | immigration_signal | 1.4× |
+| claude-haiku-4-5 | poverty_signal | 1.9× |
+
+Both generators comply with the prompt's voice-variation directive in
+roughly the same direction (top_20 voice = more academic register).
+The cross-generator survival of the academic_career × school_tier
+audit signal is consistent with this design effect: both generators
+write the content the LLM extractor then reads.
+
+The audit's substantive claim about the surviving signal is narrowed
+again. From "real LLM behavior on academic-narrative content" the
+framing becomes "the LLM extractor is reading academic-register
+content the corpus generator wrote in response to the audit prompt's
+voice-variation directive."
+
+**Sensitivity test in flight.** A new opt-in
+`--prompt-variant content_neutral` flag was added to
+`tools/generate_ps_corpus.py` (commit `9f940d8`). The variant uses
+parallel school-name-only descriptions across tiers, removes the
+research-lab content cue from top_20, and explicitly forbids
+academic-register variation across school tiers. Generating a
+content-neutral corpus with gpt-4o-mini and re-running Audit 2 LLM
+will determine whether the school_tier × academic_career signal is a
+prompt-design artifact (predicted: DI moves toward parity) or robust
+to prompt design.
+
+**Cross-extractor disagreement on the surviving cell.** Cross-
+referencing the canonical Audit 2 outputs surfaces a previously
+unhighlighted finding: SBERT and the LLM extractor disagree on
+*direction* on the only cell that comes close to significance under
+either:
+
+| extractor | academic_career × school_tier DI | perm-p |
+|---|---:|---:|
+| LLM (gpt-4o-mini) | 0.650 | 0.059 |
+| SBERT | 1.242 | 0.18 |
+
+LLM reads top_20 PSs as more academic_career-leaning; SBERT reads
+the lower-resource group (combined lower_tier + mid_tier) as more
+academic_career-leaning. Same corpus, opposite directions. RESULTS.md
+"Cross-extractor observation" section is rewritten to surface this
+explicitly. The audit's surviving claim is now bounded to LLM-
+extractor architectures specifically.
+
+**Doc freshness pass:**
+
+- `RESULTS.md`: SBERT section wording bug at line 217 fixed (DI
+  0.794 is just *outside* the 4/5 lower bound, not inside).
+- `RESULTS.md`: cross-extractor section rewritten to reflect the
+  post-tie-break-fix LLM findings (was still citing the stale
+  pre-fix major_illness × race / refugee × race cells).
+- `RESULTS.md`: substantive interpretation extended to note that
+  the surviving signal is architecture-dependent and only holds
+  under the LLM extractor.
+- `README.md`: plain-language section's "what happens when you run
+  it" bullets updated for paired-perm framing on the mitigator,
+  the cross-extractor disagreement, and the prompt-design effect.
+- `README.md`: screening-simulation paragraph rewritten to
+  distinguish fitted from oracle scoring rules (matching the
+  RESULTS.md fix from earlier today).
+- `tools/run_disclosure_sweep.py`: `--model` argparse now has a
+  `choices=` constraint to match the screening-counterfactual
+  runner; `--narrative-sd` help text clarifies that this tool's
+  default 0.3 differs from the screening-counterfactual default
+  0.10.
+
 ## 2026-05-06 (end of day) — Cross-generator validation of the school_tier signal
 
 The cross-family scoring check from 2026-05-05 varied the scorer

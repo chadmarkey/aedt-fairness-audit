@@ -113,10 +113,32 @@ def main() -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--n", type=int, default=6000)
     ap.add_argument("--invite-rate", type=float, default=0.12)
-    ap.add_argument("--narrative-sd", type=float, default=0.3)
+    ap.add_argument(
+        "--narrative-sd", type=float, default=0.3,
+        help=(
+            "Within-group SD on narrative_sentiment (default 0.3). Note: "
+            "the screening-counterfactual tool defaults to 0.10. The "
+            "canonical disclosure_sweep reference output uses 0.3, which "
+            "produces somewhat noisier CIs at the same n."
+        ),
+    )
     ap.add_argument("--bootstrap-reps", type=int, default=100)
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--model", default="logistic_regression")
+    ap.add_argument(
+        "--model",
+        default="logistic_regression",
+        choices=["linear_score", "logistic_regression", "random_forest",
+                 "gradient_boosting", "svm_rbf",
+                 "quadratic_aggregation", "cubic_aggregation"],
+        help=(
+            "Screening model. Default logistic_regression is the fitted "
+            "model the canonical RESULTS.md disclosure table uses. "
+            "linear_score / quadratic_aggregation / cubic_aggregation are "
+            "oracle baselines that apply the DGP betas at inference; useful "
+            "for sensitivity testing but not fitted on the disclosure-"
+            "modified data."
+        ),
+    )
     args = ap.parse_args()
 
     parts = args.anchoring.split(":")

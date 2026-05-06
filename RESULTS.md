@@ -214,10 +214,10 @@ Top-K = 0.30. Permutation reps = 10,000.
 
 The SBERT extractor produces no cells with permutation p < 0.10 at
 n = 384. The strongest point estimate (poverty × race = 0.794, just
-inside the 4/5 lower bound) reaches p = 0.25. The aggregate gender
-finding observed at n = 192 (DI = 0.657, p = 0.12) does not replicate
-at n = 384 (aggregate gender = 0.855, p = 0.37). The n = 192 result
-appears to have been a small-corpus artifact.
+*outside* the 4/5 lower bound of 0.80) reaches p = 0.25. The
+aggregate gender finding observed at n = 192 (DI = 0.657, p = 0.12)
+does not replicate at n = 384 (aggregate gender = 0.855, p = 0.37).
+The n = 192 result appears to have been a small-corpus artifact.
 
 ### Audit 2 LLM (gpt-4o-mini) — PS four-question extraction
 
@@ -381,14 +381,21 @@ across families.
   built largely on artifacts of stable-sort tie-breaking on
   near-binary scores; that is now fixed.
 - The **academic_career × school_tier signal** is direction-
-  consistent across all four (generator × scorer) cells at
-  uncorrected p ≈ 0.06–0.13, with a same-family cell (gpt-4o-mini gen
-  + gpt-4o-mini scorer) at p = 0.059 and a both-flipped cell
-  (claude-haiku gen + claude-haiku scorer) at p = 0.127. This is the
-  most robust finding the audit can report. It does not survive
-  multiple-comparisons correction. It is consistent with both LLM
-  families reading more academic narrative out of top-20 PSs that
-  both LLM families also wrote.
+  consistent across all four (generator × scorer) cells **under the
+  LLM extractor** at uncorrected p ≈ 0.06–0.13. Same-family cell
+  (gpt-4o-mini gen + gpt-4o-mini scorer) at p = 0.059; both-flipped
+  cell (claude-haiku gen + claude-haiku scorer) at p = 0.127. It does
+  not survive multiple-comparisons correction. It is consistent with
+  both LLM families reading more academic narrative out of top-20 PSs
+  that both LLM families also wrote.
+- **The signal does not hold across extractor architectures.** Under
+  the SBERT extractor on the same corpus, academic_career ×
+  school_tier is DI = 1.242 (lower-resource group — combined
+  lower_tier and mid_tier — selected at higher rate than top_20)
+  at p = 0.18. SBERT and the LLM extractor disagree on direction on
+  the same cell. Findings that hold across both extractors are more
+  robust than findings that appear in only one; this finding appears
+  in only the LLM extractor.
 - **The earlier generator-confound caveat is narrowed**, not removed.
   The cross-generator check rules out a *pure* generator confound
   (where the signal disappears under a non-gpt-4o-mini generator).
@@ -402,13 +409,16 @@ The audit's substantive claim under the corrected-tiebreak audit is
 narrower than what the prior version reported:
 
 - **What the audit shows**: no statistically significant per-cell
-  demographic disparity at corrected α; one borderline shared
-  school_tier finding (academic_career × school_tier) that
-  direction-consistently survives a cross-generator + cross-scorer
-  robustness check (4-cell DI 0.65–0.75; uncorrected p 0.06–0.13).
-  The signal reflects LLM behavior on academic-narrative content
-  rather than a pure generator artifact. It does not survive
-  multiple-comparisons correction.
+  demographic disparity at corrected α. One borderline LLM-extractor
+  finding (academic_career × school_tier) is direction-consistent
+  across a 2 × 2 cross-generator × cross-scorer robustness check
+  (4-cell DI 0.65–0.75; uncorrected p 0.06–0.13). The signal reflects
+  LLM-extractor behavior on academic-narrative content rather than a
+  pure generator artifact. It does not survive multiple-comparisons
+  correction. The SBERT extractor reads the same cell in the
+  *opposite* direction (DI = 1.242, p = 0.18); the finding is
+  architecture-dependent within the patent's underspecified col. 10
+  scope.
 - **What the audit shows about the mitigator**: under a paired-
   permutation test of the per-cell Delta DI (10,000 reps; null of
   pre/post score exchangeability per applicant), the
@@ -461,12 +471,36 @@ robustness checks before drawing inferential conclusions.
 ### Cross-extractor observation
 
 The SBERT and LLM extractors produce different per-cell findings on
-the same corpus. SBERT shows no individual cell with p < 0.10 at
-n = 384; LLM shows two race-axis cells (refugee, major_illness) at
-p ≤ 0.053 plus an aggregate school_tier finding at p = 0.059. The
-extractor architecture is an implementer's choice the patent does not
-specify; both implementations are within col. 10's "users can apply
-NLP" scope.
+the same corpus. After the 2026-05-06 tie-break fix:
+
+- **SBERT** shows no individual cell with p < 0.10 at n = 384. Lowest
+  per-cell p is academic_career × school_tier at p = 0.18 (DI = 1.242),
+  pointing in the direction of the *lower-resource group (combined
+  lower_tier and mid_tier) selected at higher rate than top_20* on
+  the academic_career question.
+- **LLM (gpt-4o-mini)** shows academic_career × school_tier at p =
+  0.059 (DI = 0.650), pointing in the *opposite* direction — top_20
+  selected at higher rate than the lower-resource group on the same
+  question. The `_total` aggregate × school_tier sits at p = 0.062
+  (DI = 0.673).
+
+The two extractors not only disagree on which cells are flagged; on
+the one cell that comes closest to significance under both, they
+disagree on direction. SBERT's cosine-similarity-to-exemplars approach
+and the LLM's direct question-answering approach are reading
+different signals out of the same text. The token-frequency
+diagnostic (CHANGELOG 2026-05-06 end-of-day) shows top_20 PSs contain
+1.4× to 3.6× more academic-register tokens (research, lab, faculty,
+mentor, scientist, …) than lower_tier PSs in non-academic seeds —
+content the LLM extractor reads as *more academic*, but that the
+SBERT exemplar matching apparently does not. The mechanism behind
+SBERT's directionality is not isolated by this audit.
+
+The extractor architecture is an implementer's choice the patent does
+not specify; both implementations are within col. 10's "users can
+apply NLP" scope. Findings that hold across both extractors are more
+robust than findings that appear in only one. **No cell in the
+corrected audit holds direction across both extractors.**
 
 ---
 
