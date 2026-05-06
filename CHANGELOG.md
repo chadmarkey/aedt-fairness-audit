@@ -74,14 +74,59 @@ pipeline produces vendor-dependent demographic outcomes that its
 specified mitigation does not close," not per-cell statistical
 significance.
 
+**Bias-mitigator code review and audit-1 reframing.** A second pass
+of methodology audit (using two parallel reviewer agents focused on
+the bias-mitigator implementation and on Audit 1's experimental
+design) surfaced four classes of issue:
+
+- Three substitution pairs in `mitigator/semantic_substitution.py`
+  changed propositional content rather than just connotation, which
+  violates Claim 1's "preserve semantic structure" requirement:
+  `voluntary -> approved`, `personal reasons -> approved reasons`,
+  `despite -> with`. Plus `completed -> successfully completed`,
+  `overcame -> managed`, and `struggled -> worked through` add or
+  weaken factual claims. All six pairs were removed. Documentation
+  in `DEFAULT_SUBSTITUTIONS` now lists them as deliberately excluded
+  with the rationale.
+- Five performance-descriptor pairs (`dedicated`, `diligent`,
+  `meticulous`, etc.) collapsed to a single token (`high-performing`),
+  erasing real semantic distinctions and creating spurious textual
+  identity post-substitution. Each is now mapped to a distinct
+  neutral term (`committed`, `thorough`, `detail-oriented`, etc.).
+- A small case-sensitivity bug in `SCHOOL_PATTERNS` (the only regex
+  pass without `re.IGNORECASE`) was fixed.
+- A mutable-default-argument pattern in `SemanticSubstituter.__init__`
+  was fixed by copying the default dict explicitly.
+
+The audit-1 experiment was reframed in `RESULTS.md` and in the
+runner's docstring. The prior framing ("Bias Mitigator efficacy")
+overstated what the experiment can test. With `examples/example_pipeline.py`
+(VADER) as the `pipeline_fn`, the mitigator's targets (names, schools,
+locations, ethnicity terms) are largely invisible to the scoring step,
+and a null Delta DI does not establish mitigation efficacy. The
+revised framing makes this explicit: Audit 1 is a sanity check that
+the mitigator runs end-to-end against any user-supplied
+`pipeline_fn`, not a Claim-1 efficacy test. Substantive mitigation
+testing lives in `tools/counterfactual_decomposition.py` against the
+LLM PS extractor. A new function (`paired_permutation_test_delta_di`)
+was added to `audit/screening.py` and wired into `tools/run_audit_1.py`,
+which now reports a paired-permutation p-value for the Delta DI per
+axis (under the null of pre/post score exchangeability). Audit 1 was
+re-run on the n=384 corpus with the revised mitigator; the per-axis
+Delta DIs are now 0.000 / 0.000 / -0.092 (gender / race /
+school_tier) with paired-perm p-values of 1.00 / 1.00 / 0.52 — i.e.,
+no systematic effect of the mitigator on VADER scores at this sample
+size, which is the expected outcome for the reasons in the reframed
+discussion.
+
 **AI assistance disclosure.** The methodology revisions, code
 changes, and prose edits in this iteration cycle were drafted with
 Claude (Anthropic) as a coding and writing collaborator. Each commit
 carries a `Co-Authored-By: Claude Opus 4.7` trailer. The substantive
-decisions, the cross-family check, the framing pivots, and the
-disclosure choices are mine. The collaboration pattern is the same
-one used during the original repo build (see the README's positioning
-paragraph).
+decisions, the cross-family check, the framing pivots, the
+disclosure choices, and the responses to peer review are mine. The
+collaboration pattern is the same one used during the original repo
+build (see the README's positioning paragraph).
 
 ## 2026-05-04 — Initial public release
 

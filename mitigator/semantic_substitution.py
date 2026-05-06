@@ -25,31 +25,45 @@ from typing import Dict, Iterable
 #   - Powers et al. (2020): JGIM — "Race-correlated language in clinical evaluations"
 # Mapping: biasing term → neutral alternative preserving structural role.
 DEFAULT_SUBSTITUTIONS: Dict[str, str] = {
-    # Communal/agentic language pairs (Madera, Hebl, Martin 2009, JAP)
+    # Communal/agentic language pairs (Madera, Hebl, Martin 2009, JAP).
+    # Each pair preserves a distinct semantic neighborhood; we do not
+    # collapse multiple distinct adjectives onto a single neutral term,
+    # which would create artificial textual identity post-substitution.
     r"\bcaring\b": "skilled",
     r"\bnurturing\b": "competent",
     r"\bwarm\b": "professional",
     r"\bhelpful\b": "effective",
     r"\bpleasant\b": "professional",
-    # Performance-descriptor pairs
-    r"\bdiligent\b": "high-performing",
-    r"\bhardworking\b": "high-performing",
-    r"\bdedicated\b": "high-performing",
-    r"\bconscientious\b": "high-performing",
-    r"\bmeticulous\b": "high-performing",
-    # Leave-of-absence phrasing pairs
-    r"\bvoluntary\b": "approved",
-    r"\bvoluntarily\b": "with approval",
-    r"\bpersonal reasons?\b": "approved reasons",
-    # Hedge-language pairs
-    r"\bcompleted\b": "successfully completed",
+    # Performance-descriptor pairs. Each maps to a distinct agentic
+    # equivalent rather than collapsing all three to "high-performing"
+    # (which would erase real semantic distinctions between the original
+    # words).
+    r"\bdiligent\b": "thorough",
+    r"\bhardworking\b": "effective",
+    r"\bdedicated\b": "committed",
+    r"\bconscientious\b": "thorough",
+    r"\bmeticulous\b": "detail-oriented",
+    # Hedge-language pairs (boost weak language to neutral). Documented
+    # in the gendered-evaluation literature; each preserves the
+    # surrounding sentence's syntactic role.
     r"\bsatisfactory\b": "strong",
     r"\bacceptable\b": "strong",
     r"\bcompetent\b": "highly competent",
-    # Concession-framing pairs
-    r"\bdespite\b": "with",
-    r"\bovercame\b": "managed",
-    r"\bstruggled\b": "worked through",
+    # Notes on substitutions intentionally NOT included here:
+    # - voluntary -> approved: changes propositional content (self-
+    #   initiated vs institutionally sanctioned); violates the patent's
+    #   "preserve semantic structure" requirement.
+    # - personal reasons -> approved reasons: same.
+    # - despite -> with: flips logical structure (concession to
+    #   accompaniment). Distorts meaning in most natural uses.
+    # - completed -> successfully completed: adds factual claim
+    #   (success) absent from the original.
+    # - overcame -> managed: weakens propositional content (victory
+    #   vs adequate response).
+    # Users with corpus-specific evidence justifying these substitutions
+    # may add them explicitly via the `substitutions` parameter, with the
+    # caveat that they go beyond Claim 1's "preserve semantic structure"
+    # requirement.
 }
 
 
@@ -66,7 +80,14 @@ class SemanticSubstituter:
         substitutions: Dict[str, str] | None = None,
         case_insensitive: bool = True,
     ):
-        self.substitutions = substitutions if substitutions is not None else DEFAULT_SUBSTITUTIONS
+        # Copy the default dict to avoid the mutable-default-argument
+        # footgun: extend() mutates self.substitutions in place, and if
+        # we held a reference to the module-level DEFAULT_SUBSTITUTIONS
+        # the mutation would leak across instances.
+        self.substitutions = (
+            dict(substitutions) if substitutions is not None
+            else dict(DEFAULT_SUBSTITUTIONS)
+        )
         self.case_insensitive = case_insensitive
 
     def __call__(self, text: str) -> str:

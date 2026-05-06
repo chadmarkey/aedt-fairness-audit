@@ -203,7 +203,7 @@ OPENAI_API_KEY=sk-... python -m tools.generate_ps_corpus \
     --provider openai --model gpt-4o-mini --instances-per-cell 4 \
     --out synthetic/data/ps_corpus.jsonl
 
-# 2. Audit 1: Bias Mitigator efficacy on a VADER baseline pipeline
+# 2. Audit 1: Bias Mitigator effect on a VADER baseline pipeline
 python -m tools.run_audit_1 \
     --corpus synthetic/data/ps_corpus.jsonl \
     --pipeline examples.example_pipeline:score_texts \
@@ -351,12 +351,11 @@ OPENAI_API_KEY=sk-... python -m tools.generate_ps_corpus \
     --out synthetic/data/ps_corpus.jsonl
 ```
 
-### Audit 1 — Bias Mitigator efficacy — `tools/run_audit_1.py`
+### Audit 1 — Bias Mitigator effect on a user-supplied pipeline_fn — `tools/run_audit_1.py`
 
-**What it does:** Tests whether the patent's bias-removal step actually
-removes bias. Runs the same scoring pipeline twice. Once on raw
+**What it does:** Runs a user-supplied `pipeline_fn` twice. Once on raw
 applicant text. Once after applying the patent's input-side
-detect-and-replace step. Compares whether the demographic gaps
+detect-and-replace bias mitigator. Compares whether the demographic gaps
 shrink. Requires a user-supplied scoring function via the `pipeline_fn`
 interface; see [`PIPELINE_BUILD_GUIDE.md`](PIPELINE_BUILD_GUIDE.md).
 

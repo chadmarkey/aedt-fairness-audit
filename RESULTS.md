@@ -139,26 +139,42 @@ configuration is reported here as the primary; the n=192 + gpt-5-mini
 configuration is described at the end of this section as a robustness
 check.
 
-### Audit 1 — Bias Mitigator efficacy on a VADER pipeline
+### Audit 1 — Bias Mitigator effect on a VADER baseline pipeline
 
-Top-K = 0.20. Permutation reps = 10,000 (two-sided, under null of
-group-selection independence). Bootstrap CIs are computed at 1000 reps
-and stored in the JSON output. They are not displayed in this table.
-See "Why bootstrap CIs are not displayed" below.
+Top-K = 0.20. Bootstrap reps = 1000. Paired-permutation reps = 10,000
+(under null of pre/post score exchangeability — i.e., "the mitigator
+has no systematic effect on the scores"). Bootstrap CIs are computed
+and stored in the JSON output but are not displayed in this table.
 
-| Axis | Baseline DI | Baseline perm-p | Post-mitigation DI | Post-mitigation perm-p | Δ DI |
-|---|---:|:---:|---:|:---:|---:|
-| gender | 1.081 | 0.70 | 1.026 | 0.90 | -0.055 |
-| race | 1.271 | 0.27 | 1.271 | 0.27 | 0.000 |
-| school_tier | 0.875 | 0.59 | 0.828 | 0.50 | -0.047 |
+| Axis | Baseline DI | Post-mitigation DI | Δ DI | paired-perm-p |
+|---|---:|---:|---:|:---:|
+| gender | 1.081 | 1.081 | +0.000 | 1.00 |
+| race | 1.271 | 1.271 | +0.000 | 1.00 |
+| school_tier | 0.875 | 0.783 | −0.092 | 0.52 |
 
-VADER is a sentiment baseline, not the patent's NLP architecture. None
-of the Audit 1 cells reach permutation significance at n = 384. The
-race baseline point estimate (1.271, just outside the 4/5 upper bound
-of 1.25) is the closest, and the mitigator does not move it.
-Substantively interpreting Claim 1 efficacy requires a patent-faithful
-pipeline; build one yourself per
-[`PIPELINE_BUILD_GUIDE.md`](PIPELINE_BUILD_GUIDE.md).
+**What this audit can and cannot test.** Audit 1 measures whether the
+patent's specified bias-mitigation step changes a user-supplied
+`pipeline_fn`'s output in a way that moves disparate impact. The
+interpretive value of the result depends entirely on whether the
+`pipeline_fn` reads the markers the mitigator strips. The example
+pipeline shipped with the toolkit (`examples/example_pipeline.py`)
+is VADER, a sentiment-lexicon scorer that is largely insensitive to
+names, school names, locations, and ethnicity terms. Under VADER,
+the mitigator's actions on those markers are mostly invisible to the
+score. The reported Δ DI of zero on gender and race is therefore
+consistent with "VADER doesn't read the markers the mitigator strips,"
+not with "the mitigator effectively reduces disparity on a real
+LLM-based AEDT." The school_tier Δ of −0.092 has a paired-permutation
+p of 0.52 and is not distinguishable from chance at this sample size.
+
+**Substantive mitigation testing lives in the counterfactual
+decomposition (see Validation below)**, run against the LLM PS
+extractor that does read the markers and the surrounding content. That
+experiment is the one that addresses Claim 1 efficacy in any
+substantive sense. Audit 1 is included as a sanity check that the
+mitigator runs end-to-end against any user-supplied pipeline_fn, plus
+a template anyone can adapt by replacing `pipeline_fn` with their own
+AEDT scorer; it is not a finding about Claim 1 in general.
 
 ### Audit 2 SBERT — PS four-question extraction
 

@@ -254,6 +254,96 @@ def permutation_test_di(
     }
 
 
+def paired_permutation_test_delta_di(
+    baseline_scores: np.ndarray,
+    mitigated_scores: np.ndarray,
+    group: np.ndarray,
+    top_frac: float,
+    n_perms: int = 10000,
+    seed: int = 0,
+) -> Dict[str, float]:
+    """Paired permutation test for the mitigation effect on DI.
+
+    Tests the null hypothesis that the mitigator has no systematic effect
+    on per-applicant scores: baseline and post-mitigation scores are
+    exchangeable. Under that null, for each applicant we randomly swap
+    which score is treated as "baseline" and which as "post-mitigation,"
+    recompute DI in both conditions, and recompute the per-permutation
+    Delta DI. The two-sided p-value is the fraction of permutations
+    where |Delta_permuted| >= |Delta_observed|.
+
+    This is the appropriate inferential test for "did the mitigator
+    move the DI?" — distinct from the per-condition permutation test
+    in ``permutation_test_di``, which tests "is each DI different from
+    the null of group-selection independence?"
+
+    Args:
+        baseline_scores: per-applicant pre-mitigation scores
+        mitigated_scores: per-applicant post-mitigation scores
+        group: binary {0, 1, -1=excluded} group assignment
+        top_frac: top-K selection fraction (must match the audit setting)
+        n_perms: number of permutation replicates
+        seed: base seed for reproducibility
+
+    Returns:
+        Dict with delta_observed, baseline_di, mitigated_di, p_value,
+        n_perms_run, n_perms_valid, n_extreme, and test description.
+    """
+    rng = np.random.default_rng(seed)
+    mask = group >= 0
+    bs = baseline_scores[mask]
+    ms = mitigated_scores[mask]
+    g = group[mask]
+    n = len(bs)
+
+    sel_b = top_k_selection(bs, top_frac)
+    sel_m = top_k_selection(ms, top_frac)
+    di_b = disparate_impact(sel_b, g)["disparate_impact"]
+    di_m = disparate_impact(sel_m, g)["disparate_impact"]
+    if np.isnan(di_b) or np.isnan(di_m):
+        return {
+            "baseline_di": float(di_b) if not np.isnan(di_b) else float("nan"),
+            "mitigated_di": float(di_m) if not np.isnan(di_m) else float("nan"),
+            "delta_observed": float("nan"),
+            "p_value": float("nan"),
+            "n_perms_run": int(n_perms),
+            "n_perms_valid": 0,
+            "n_extreme": 0,
+            "test": "paired permutation under null of pre/post score exchangeability",
+        }
+
+    delta_obs = di_m - di_b
+    obs_abs = abs(delta_obs)
+
+    n_extreme = 0
+    n_valid = 0
+    for _ in range(n_perms):
+        flips = rng.random(n) < 0.5
+        b_perm = np.where(flips, ms, bs)
+        m_perm = np.where(flips, bs, ms)
+        sel_b_p = top_k_selection(b_perm, top_frac)
+        sel_m_p = top_k_selection(m_perm, top_frac)
+        di_b_p = disparate_impact(sel_b_p, g)["disparate_impact"]
+        di_m_p = disparate_impact(sel_m_p, g)["disparate_impact"]
+        if np.isnan(di_b_p) or np.isnan(di_m_p):
+            continue
+        n_valid += 1
+        if abs(di_m_p - di_b_p) >= obs_abs:
+            n_extreme += 1
+
+    p_value = (n_extreme + 1) / (n_valid + 1)
+    return {
+        "baseline_di": float(di_b),
+        "mitigated_di": float(di_m),
+        "delta_observed": float(delta_obs),
+        "p_value": float(p_value),
+        "n_perms_run": int(n_perms),
+        "n_perms_valid": int(n_valid),
+        "n_extreme": int(n_extreme),
+        "test": "paired permutation under null of pre/post score exchangeability",
+    }
+
+
 def axis_audit(
     df: pd.DataFrame,
     score_col: str,

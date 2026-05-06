@@ -152,7 +152,7 @@ class Anonymizer:
         # 5. Medical school name redaction.
         if self.redact_schools:
             for pattern in SCHOOL_PATTERNS:
-                out = re.sub(pattern, "[SCHOOL]", out)
+                out = re.sub(pattern, "[SCHOOL]", out, flags=re.IGNORECASE)
 
         # 6. Custom user-supplied patterns.
         for pattern, repl in self.custom_patterns:

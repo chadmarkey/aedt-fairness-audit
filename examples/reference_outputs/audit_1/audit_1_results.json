@@ -1,11 +1,13 @@
 {
-  "audit": "audit_1_bias_mitigator_efficacy",
-  "patent": "US 12,265,502 B1, Claim 1",
+  "audit": "audit_1_bias_mitigator_effect_on_pipeline",
+  "patent": "US 12,265,502 B1, Claim 1 (input-side anonymization step)",
+  "interpretation_caveat": "This audit reports the change in DI under a user-supplied pipeline_fn after applying the patent's specified bias mitigator. The result depends on whether the pipeline_fn reads the markers the mitigator strips. Sentiment-lexicon pipelines (e.g., VADER) are largely insensitive to those markers; null Delta DI under VADER does NOT establish general mitigation efficacy. Substantive mitigation testing lives in tools/counterfactual_decomposition.py.",
   "corpus_path": "synthetic/data/ps_corpus_n384.jsonl",
   "pipeline_spec": "examples.example_pipeline:score_texts",
   "n_applicants": 384,
   "top_frac": 0.2,
   "bootstrap_reps": 1000,
+  "n_permutations": 10000,
   "baseline": {
     "gender": {
       "axis": "gender",
@@ -17,9 +19,9 @@
       "selection_rate_group1": 0.19270833333333334,
       "disparate_impact": 1.0810810810810811,
       "statistical_parity_difference": 0.015625,
-      "bootstrap_di_point": 1.0814232819446277,
-      "bootstrap_di_ci_lo": 0.7275240256057045,
-      "bootstrap_di_ci_hi": 1.667741935483871,
+      "bootstrap_di_point": 1.2647058823529411,
+      "bootstrap_di_ci_lo": 0.7906976744186046,
+      "bootstrap_di_ci_hi": 1.9615384615384617,
       "bootstrap_n_reps": 1000
     },
     "race": {
@@ -32,9 +34,9 @@
       "selection_rate_group1": 0.16666666666666666,
       "disparate_impact": 1.2708333333333335,
       "statistical_parity_difference": 0.045138888888888895,
-      "bootstrap_di_point": 1.3160700685453162,
-      "bootstrap_di_ci_lo": 0.8265377956142652,
-      "bootstrap_di_ci_hi": 2.4152101063829785,
+      "bootstrap_di_point": 1.5,
+      "bootstrap_di_ci_lo": 0.9484722222222223,
+      "bootstrap_di_ci_hi": 2.8750000000000004,
       "bootstrap_n_reps": 1000
     },
     "school_tier": {
@@ -47,9 +49,9 @@
       "selection_rate_group1": 0.21875,
       "disparate_impact": 0.875,
       "statistical_parity_difference": -0.02734375,
-      "bootstrap_di_point": 0.8595505617977528,
-      "bootstrap_di_ci_lo": 0.5722361111111111,
-      "bootstrap_di_ci_hi": 1.3333333333333333,
+      "bootstrap_di_point": 0.9807692307692307,
+      "bootstrap_di_ci_lo": 0.6323529411764706,
+      "bootstrap_di_ci_hi": 1.6388888888888888,
       "bootstrap_n_reps": 1000
     }
   },
@@ -60,13 +62,13 @@
       "group_1_label": "Male",
       "n_group0": 192,
       "n_group1": 192,
-      "selection_rate_group0": 0.203125,
-      "selection_rate_group1": 0.19791666666666666,
-      "disparate_impact": 1.0263157894736843,
-      "statistical_parity_difference": 0.005208333333333343,
-      "bootstrap_di_point": 1.0541187556292149,
-      "bootstrap_di_ci_lo": 0.6892025171624715,
-      "bootstrap_di_ci_hi": 1.5798048230020774,
+      "selection_rate_group0": 0.20833333333333334,
+      "selection_rate_group1": 0.19270833333333334,
+      "disparate_impact": 1.0810810810810811,
+      "statistical_parity_difference": 0.015625,
+      "bootstrap_di_point": 1.2,
+      "bootstrap_di_ci_lo": 0.7906976744186046,
+      "bootstrap_di_ci_hi": 1.851851851851852,
       "bootstrap_n_reps": 1000
     },
     "race": {
@@ -79,9 +81,9 @@
       "selection_rate_group1": 0.16666666666666666,
       "disparate_impact": 1.2708333333333335,
       "statistical_parity_difference": 0.045138888888888895,
-      "bootstrap_di_point": 1.2596133859904386,
-      "bootstrap_di_ci_lo": 0.7977533274440519,
-      "bootstrap_di_ci_hi": 2.1727621231471796,
+      "bootstrap_di_point": 1.3777777777777778,
+      "bootstrap_di_ci_lo": 0.8333333333333333,
+      "bootstrap_di_ci_hi": 2.5185185185185186,
       "bootstrap_n_reps": 1000
     },
     "school_tier": {
@@ -90,19 +92,51 @@
       "group_1_label": "top-tier",
       "n_group0": 256,
       "n_group1": 128,
-      "selection_rate_group0": 0.1875,
-      "selection_rate_group1": 0.2265625,
-      "disparate_impact": 0.8275862068965517,
-      "statistical_parity_difference": -0.0390625,
-      "bootstrap_di_point": 0.8018773466833541,
-      "bootstrap_di_ci_lo": 0.5341602736487608,
-      "bootstrap_di_ci_hi": 1.201905221333499,
+      "selection_rate_group0": 0.18359375,
+      "selection_rate_group1": 0.234375,
+      "disparate_impact": 0.7833333333333333,
+      "statistical_parity_difference": -0.05078125,
+      "bootstrap_di_point": 0.875,
+      "bootstrap_di_ci_lo": 0.5694444444444444,
+      "bootstrap_di_ci_hi": 1.3333333333333333,
       "bootstrap_n_reps": 1000
     }
   },
   "delta_di_per_axis": {
-    "gender": -0.05476529160739685,
+    "gender": 0.0,
     "race": 0.0,
-    "school_tier": -0.04741379310344829
+    "school_tier": -0.09166666666666667
+  },
+  "delta_di_paired_permutation": {
+    "gender": {
+      "baseline_di": 1.0810810810810811,
+      "mitigated_di": 1.0810810810810811,
+      "delta_observed": 0.0,
+      "p_value": 1.0,
+      "n_perms_run": 10000,
+      "n_perms_valid": 10000,
+      "n_extreme": 10000,
+      "test": "paired permutation under null of pre/post score exchangeability"
+    },
+    "race": {
+      "baseline_di": 1.2708333333333335,
+      "mitigated_di": 1.2708333333333335,
+      "delta_observed": 0.0,
+      "p_value": 1.0,
+      "n_perms_run": 10000,
+      "n_perms_valid": 10000,
+      "n_extreme": 10000,
+      "test": "paired permutation under null of pre/post score exchangeability"
+    },
+    "school_tier": {
+      "baseline_di": 0.875,
+      "mitigated_di": 0.7833333333333333,
+      "delta_observed": -0.09166666666666667,
+      "p_value": 0.518048195180482,
+      "n_perms_run": 10000,
+      "n_perms_valid": 10000,
+      "n_extreme": 5180,
+      "test": "paired permutation under null of pre/post score exchangeability"
+    }
   }
 }

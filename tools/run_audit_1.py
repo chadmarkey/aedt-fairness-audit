@@ -1,12 +1,25 @@
-"""Audit 1: Bias Mitigator efficacy.
+"""Audit 1: Bias Mitigator effect on a user-supplied pipeline_fn.
 
-Runs the pipeline twice — once on raw text, once on Bias-Mitigator-processed
-text — and reports the change in disparate impact across demographic axes.
+Runs the pipeline twice — once on raw text, once on Bias-Mitigator-
+processed text — and reports the change in disparate impact across
+demographic axes, with a paired permutation test of whether the
+mitigation-induced Delta DI is distinguishable from zero.
 
-The audit framing: US Patent No. 12,265,502 B1, Claim 1, makes input-side
-detect-and-replace bias mitigation a required element of the claimed method.
-This audit measures whether a reasonable implementation of that requirement
-reduces disparate impact when applied to demographically stratified inputs.
+**What this audit can and cannot test.** Audit 1 measures whether the
+mitigator changes the *user-supplied* pipeline's output in a way that
+moves disparate impact. The interpretive value of the result depends
+entirely on whether the user-supplied pipeline reads the markers the
+mitigator strips. If the pipeline is a pure sentiment lexicon (e.g.,
+the included VADER baseline in `examples/example_pipeline.py`), the
+mitigator's actions on names, locations, school names, and ethnicity
+terms are largely invisible to the scoring step, and Audit 1 cannot
+be interpreted as a test of mitigation efficacy on a real LLM-based
+AEDT. Substantive mitigation efficacy on the patent's specified
+PS-extraction pipeline is tested separately in
+`tools/counterfactual_decomposition.py` (run against an LLM
+extractor) and reported in `RESULTS.md`. Audit 1 is a sanity check
+that the mitigator runs end-to-end against any user-supplied
+pipeline_fn, not a finding about Claim 1 efficacy in general.
 
 Inputs:
   --corpus    JSONL file produced by tools.generate_ps_corpus
@@ -31,7 +44,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import numpy as np
 import pandas as pd
 
-from audit.screening import axis_audit, DEFAULT_AXES
+from audit.screening import (
+    DEFAULT_AXES,
+    assign_binary_group,
+    axis_audit,
+    paired_permutation_test_delta_di,
+)
 from mitigator import BiasMitigator
 
 
@@ -100,6 +118,9 @@ def main() -> int:
     ap.add_argument("--top-frac", type=float, default=0.2,
                     help="Top-K selection fraction (default 0.2 = top 20%%)")
     ap.add_argument("--bootstrap-reps", type=int, default=200)
+    ap.add_argument("--n-permutations", type=int, default=10000,
+                    help="Permutation replicates for the paired test of "
+                         "Delta DI per axis (default 10,000)")
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
 
@@ -158,33 +179,66 @@ def main() -> int:
     _print_axis_table("BASELINE — disparate impact by demographic axis", baseline_audit)
     _print_axis_table("POST-MITIGATION — disparate impact by demographic axis", mitigated_audit)
 
+    # Paired permutation test of Delta DI per axis (under null of pre/post
+    # score exchangeability)
+    print(f"\nPaired permutation test of Delta DI ({args.n_permutations} reps)...",
+          file=sys.stderr)
+    axes_config = DEFAULT_AXES
+    delta_audit: Dict[str, Dict] = {}
+    for axis_name, col_name in axis_columns.items():
+        if axis_name not in axes_config:
+            continue
+        cfg = axes_config[axis_name]
+        group = assign_binary_group(df[col_name], cfg)
+        delta_audit[axis_name] = paired_permutation_test_delta_di(
+            baseline_scores, mitigated_scores, group,
+            top_frac=args.top_frac,
+            n_perms=args.n_permutations,
+            seed=args.seed,
+        )
+
     # Compute change
     print("\nMITIGATION EFFECT (post DI minus baseline DI per axis)")
-    print("-" * 60)
-    print(f"{'Axis':<14} {'Baseline DI':>12} {'Post DI':>12} {'Δ DI':>10}")
-    print("-" * 60)
+    print("-" * 80)
+    print(f"{'Axis':<14} {'Baseline DI':>12} {'Post DI':>12} {'Δ DI':>10} {'paired-perm-p':>16}")
+    print("-" * 80)
     for axis in baseline_audit:
         base_di = baseline_audit[axis]["disparate_impact"]
         post_di = mitigated_audit[axis]["disparate_impact"]
+        delta_p = delta_audit.get(axis, {}).get("p_value", float("nan"))
         if np.isnan(base_di) or np.isnan(post_di):
             delta_str = "    --"
         else:
             delta_str = f"{post_di - base_di:+10.3f}"
         base_str = f"{base_di:.3f}" if not np.isnan(base_di) else "  N/A"
         post_str = f"{post_di:.3f}" if not np.isnan(post_di) else "  N/A"
-        print(f"{axis:<14} {base_str:>12} {post_str:>12} {delta_str}")
-    print("-" * 60)
-    print("EEOC four-fifths threshold: DI < 0.80 = presumptive adverse impact.\n")
+        p_str = f"{delta_p:.3f}" if not np.isnan(delta_p) else "  N/A"
+        print(f"{axis:<14} {base_str:>12} {post_str:>12} {delta_str} {p_str:>16}")
+    print("-" * 80)
+    print("EEOC four-fifths range: DI in [0.80, 1.25] passes; outside flags adverse impact.\n")
+    print("Delta DI = post-mitigation DI minus baseline DI; paired-perm-p tests")
+    print("whether the mitigator produced any systematic change in scores.\n")
 
     # Write results
     results = {
-        "audit": "audit_1_bias_mitigator_efficacy",
-        "patent": "US 12,265,502 B1, Claim 1",
+        "audit": "audit_1_bias_mitigator_effect_on_pipeline",
+        "patent": "US 12,265,502 B1, Claim 1 (input-side anonymization step)",
+        "interpretation_caveat": (
+            "This audit reports the change in DI under a user-supplied "
+            "pipeline_fn after applying the patent's specified bias "
+            "mitigator. The result depends on whether the pipeline_fn "
+            "reads the markers the mitigator strips. Sentiment-lexicon "
+            "pipelines (e.g., VADER) are largely insensitive to those "
+            "markers; null Delta DI under VADER does NOT establish "
+            "general mitigation efficacy. Substantive mitigation testing "
+            "lives in tools/counterfactual_decomposition.py."
+        ),
         "corpus_path": args.corpus,
         "pipeline_spec": args.pipeline,
         "n_applicants": int(len(df)),
         "top_frac": args.top_frac,
         "bootstrap_reps": args.bootstrap_reps,
+        "n_permutations": args.n_permutations,
         "baseline": baseline_audit,
         "post_mitigation": mitigated_audit,
         "delta_di_per_axis": {
@@ -196,6 +250,7 @@ def main() -> int:
             if not np.isnan(baseline_audit[axis]["disparate_impact"])
             and not np.isnan(mitigated_audit[axis]["disparate_impact"])
         },
+        "delta_di_paired_permutation": delta_audit,
     }
     out_json = os.path.join(args.out_dir, "audit_1_results.json")
     with open(out_json, "w", encoding="utf-8") as fp:
