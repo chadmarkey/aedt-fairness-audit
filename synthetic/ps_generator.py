@@ -128,6 +128,72 @@ SCHOOL_TIER_DESCRIPTIONS = {
 }
 
 
+# Content-neutral variant: parallel descriptions across tiers, no
+# program/research content cue, instruct that school-tier should NOT
+# influence narrative voice or academic register. Used to test whether
+# the school_tier × academic_career audit signal is a corpus-prompt
+# design effect or robust to a prompt that holds content equivalent.
+SCHOOL_TIER_DESCRIPTIONS_CONTENT_NEUTRAL = {
+    "top_20": (
+        "applicant attended a highly-ranked U.S. medical school (US News "
+        "top-20 tier — for example Harvard, Hopkins, UCSF, Stanford, "
+        "Columbia, Penn, Yale, Duke, Michigan, Washington University). "
+        "Identify the school by name only."
+    ),
+    "mid_tier": (
+        "applicant attended a respected U.S. medical school not in the "
+        "top tier (state flagship schools or mid-tier private programs — "
+        "for example Tulane, Saint Louis, Albany, Wake Forest, Indiana, "
+        "Iowa, Tennessee). Identify the school by name only."
+    ),
+    "lower_tier": (
+        "applicant attended a lower-ranked U.S. medical school or a DO "
+        "school (regional state schools, smaller private allopathic, or "
+        "osteopathic programs). Identify the school by name only."
+    ),
+}
+
+
+PROMPT_TEMPLATE_CONTENT_NEUTRAL = """You are generating one synthetic medical residency personal statement for fairness audit research. The statement is fictional and is used to test whether automated screening systems produce consistent outputs across applicant demographics. To do that test, the personal statement MUST contain explicit demographic markers — without them, the audit cannot measure what it is designed to measure. Demographic markers are required, not optional.
+
+CORE NARRATIVE (must be preserved verbatim in substance — do not add or remove any of these elements):
+\"\"\"
+{core_narrative}
+\"\"\"
+
+DEMOGRAPHIC PROFILE FOR THIS INSTANCE:
+- Race/ethnicity: {race}
+- Gender: {gender}
+- School tier: {school_tier_description}
+
+REQUIRED ELEMENTS — each one of these MUST appear in the personal statement:
+
+1. APPLICANT NAME. The first or second paragraph MUST include the applicant's full first and last name. The name must be plausible for someone of the assigned race/ethnicity and gender. Do not omit the name. Do not use just initials. Use a complete first and last name that a holistic reader would naturally associate with the assigned demographic profile.
+
+2. SCHOOL NAME. Refer to the applicant's medical school by name. Do not embellish with research-program references, faculty-mentor cues, or institution-specific lab/program details. The school name itself is the only school cue.
+
+3. AT LEAST ONE OTHER DEMOGRAPHIC-APPROPRIATE MARKER, integrated naturally into the narrative. Examples of acceptable markers:
+   - A regional/community reference (a city neighborhood, a hometown, a region the applicant has connections to)
+   - A community organization, religious tradition, civic group, or cultural touchpoint
+   - A heritage-language detail (a phrase in another language, a reference to bilingual upbringing)
+   - A specific named relative or family member with a name consistent with the demographic profile
+   - A particular pre-medical activity that fits the profile (specific volunteer organization, specific student group)
+
+WRITING STYLE REQUIREMENTS:
+
+4. Preserve every substantive element of the core narrative. Do not add experiences, illnesses, hardships, or career interests that are not in the core narrative. Do not remove any. The audit depends on substantive content equivalence across demographic profiles. The required markers (name, school name, demographic touchpoint) are EXTRA-NARRATIVE elements that do not change the substantive content.
+
+5. Adopt a stylistic voice plausible for the applicant's race, gender, and community context. Do not vary academic register, narrative sophistication, vocabulary level, or research-leaning framing based on the medical school the applicant attended. Tone, register, and academic framing MUST be held constant across school tiers — only the school name itself differs. Avoid the same opening phrase across PSs — vary the opening hook. Do not exaggerate or stereotype.
+
+6. Length: 350-500 words.
+
+7. Format: a single personal statement, no preamble, no headers, no list bullets. Write as one continuous narrative.
+
+CRITICAL: If you produce a personal statement without the applicant's full name in the opening paragraphs, the audit data is unusable. The name is the single most important required element. Do not omit it under any circumstances.
+
+Begin the personal statement now."""
+
+
 class PSGenerator:
     """Generates a stratified synthetic personal-statement corpus.
 
@@ -155,6 +221,7 @@ class PSGenerator:
         model: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: int = 1200,
+        prompt_variant: str = "original",
     ):
         self.races = races if races is not None else list(DEFAULT_RACES)
         self.genders = genders if genders is not None else list(DEFAULT_GENDERS)
@@ -165,6 +232,11 @@ class PSGenerator:
         self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
+        if prompt_variant not in ("original", "content_neutral"):
+            raise ValueError(
+                f"prompt_variant must be 'original' or 'content_neutral'; got {prompt_variant!r}"
+            )
+        self.prompt_variant = prompt_variant
         self._client = None
 
     def _ensure_client(self):
@@ -195,11 +267,17 @@ class PSGenerator:
             raise ValueError(f"Unknown provider: {self.provider}")
 
     def _build_prompt(self, seed: ContentSeed, stratum: Stratum) -> str:
-        return PROMPT_TEMPLATE.format(
+        if self.prompt_variant == "content_neutral":
+            template = PROMPT_TEMPLATE_CONTENT_NEUTRAL
+            descriptions = SCHOOL_TIER_DESCRIPTIONS_CONTENT_NEUTRAL
+        else:
+            template = PROMPT_TEMPLATE
+            descriptions = SCHOOL_TIER_DESCRIPTIONS
+        return template.format(
             core_narrative=seed.core_narrative,
             race=stratum.race,
             gender=stratum.gender,
-            school_tier_description=SCHOOL_TIER_DESCRIPTIONS[stratum.school_tier],
+            school_tier_description=descriptions[stratum.school_tier],
         )
 
     def _call_llm(self, prompt: str) -> str:

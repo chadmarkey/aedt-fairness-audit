@@ -210,8 +210,9 @@ rendered PNG/PDF figures. Use it as a known-good baseline to diff your
 own runs against.
 
 The full synthetic-corpus audit set reproduces in five commands. With
-gpt-5-mini for synthetic-PS generation and LLM-based PS extraction,
-the cost is roughly $1–$2 in API credits.
+gpt-4o-mini for synthetic-PS generation and LLM-based PS extraction
+(the canonical configuration RESULTS.md reports), the cost is roughly
+$1–$3 in API credits depending on extractor cache state.
 
 ```bash
 # 1. Generate the 384-PS stratified synthetic corpus
@@ -233,7 +234,7 @@ python -m tools.run_audit_2 \
 python -m tools.run_audit_2 \
     --corpus synthetic/data/ps_corpus.jsonl \
     --out-dir out/audit_2 --extractor llm \
-    --llm-provider openai --llm-model gpt-5-mini --bootstrap-reps 1000
+    --llm-provider openai --llm-model gpt-4o-mini --bootstrap-reps 1000
 
 # 3b. Permutation tests for the inferential p-values
 #     (the audit-2 runs above produce point estimates and bootstrap CIs;
@@ -254,12 +255,15 @@ python -m tools.content_equivalence \
     --corpus synthetic/data/ps_corpus.jsonl \
     --out out/content_equivalence/results.json
 
-# 5. Counterfactual decomposition (marker-stripping diagnostic)
+# 5. Counterfactual decomposition (marker-stripping diagnostic).
+#    --n-permutations adds the paired-permutation p-value per
+#    (question × axis) cell that RESULTS.md reports.
 python -m tools.counterfactual_decomposition \
     --corpus synthetic/data/ps_corpus.jsonl \
     --original-scores out/audit_2/audit_2_per_applicant_scores_llm.csv \
     --out-dir out/counterfactual \
-    --llm-provider openai --llm-model gpt-5-mini
+    --llm-provider openai --llm-model gpt-4o-mini \
+    --n-permutations 10000
 
 # 6. Render figures
 python -m plots.plot_audit_1 \
@@ -269,7 +273,7 @@ python -m plots.plot_audit_2 \
     --name audit_2_sbert_di_heatmap --title-suffix " (SBERT)"
 python -m plots.plot_audit_2 \
     --input out/audit_2/audit_2_results_llm.json --out-dir out/audit_2 \
-    --name audit_2_llm_di_heatmap --title-suffix " (LLM, gpt-5-mini)"
+    --name audit_2_llm_di_heatmap --title-suffix " (LLM, gpt-4o-mini)"
 python -m plots.plot_content_equivalence \
     --input out/content_equivalence/results.json --out-dir out/content_equivalence
 python -m plots.plot_counterfactual_decomposition \
@@ -285,6 +289,45 @@ qualitative patterns (which axes raise an adverse-impact flag, which
 direction the mitigator moves the ratios, the ordering of the
 content-equivalence nesting levels) should reproduce. If they do not,
 that is itself an audit-worthy finding.
+
+### Cross-family and cross-generator robustness checks
+
+The headline school_tier × academic_career signal in RESULTS.md rests
+on a 2 × 2 (generator × scorer) robustness check, not on a single run.
+To reproduce the four cells:
+
+```bash
+# Cross-family scoring (vary scorer, hold generator at gpt-4o-mini)
+python -m tools.run_audit_2 \
+    --corpus synthetic/data/ps_corpus.jsonl \
+    --out-dir out/audit_2_crossfam --extractor llm \
+    --llm-provider anthropic --llm-model claude-haiku-4-5 \
+    --bootstrap-reps 1000
+
+python -m tools.rebootstrap \
+    --scores out/audit_2_crossfam/audit_2_per_applicant_scores_llm.csv \
+    --score-cols poverty refugee major_illness academic_career _total \
+    --top-frac 0.3 --bootstrap-reps 1000 --n-permutations 10000 \
+    --out out/audit_2_crossfam/audit_2_results_llm_perm.json
+
+# Cross-generator (regenerate with claude-haiku-4-5, score with both)
+ANTHROPIC_API_KEY=... python -m tools.generate_ps_corpus \
+    --provider anthropic --model claude-haiku-4-5 \
+    --instances-per-cell 4 \
+    --out synthetic/data/ps_corpus_haiku_gen.jsonl
+
+# (Then run Audit 2 LLM with each scorer against the haiku-generated
+#  corpus, and rebootstrap, exactly as in the standard reproduction
+#  block above. Reference outputs at examples/reference_outputs/
+#  audit_2_crossgen/.)
+```
+
+A content-neutral prompt variant (`--prompt-variant content_neutral`
+on `tools.generate_ps_corpus`) generates a corpus under a prompt that
+strips school-tier-correlated voice and content cues from the
+generator's instruction. Comparing audits run against the standard
+corpus vs. a content-neutral corpus tests whether the school_tier
+signal is a corpus-prompt design effect or robust to prompt design.
 
 ### Screener-model simulation
 
@@ -363,7 +406,7 @@ text is never needed.
 
 ```bash
 OPENAI_API_KEY=sk-... python -m tools.generate_ps_corpus \
-    --provider openai --model gpt-5-mini \
+    --provider openai --model gpt-4o-mini \
     --out synthetic/data/ps_corpus.jsonl
 ```
 
@@ -402,7 +445,7 @@ python -m tools.run_audit_2 \
 python -m tools.run_audit_2 \
     --corpus synthetic/data/ps_corpus.jsonl \
     --out-dir out/audit_2 --extractor llm \
-    --llm-provider openai --llm-model gpt-5-mini --bootstrap-reps 1000
+    --llm-provider openai --llm-model gpt-4o-mini --bootstrap-reps 1000
 ```
 
 ### Paragraph audit — `tools/run_paragraph_audit.py`
@@ -529,7 +572,8 @@ python -m tools.counterfactual_decomposition \
     --corpus synthetic/data/ps_corpus.jsonl \
     --original-scores out/audit_2/audit_2_per_applicant_scores_llm.csv \
     --out-dir out/counterfactual \
-    --llm-provider openai --llm-model gpt-5-mini
+    --llm-provider openai --llm-model gpt-4o-mini \
+    --n-permutations 10000
 ```
 
 ### Re-bootstrap — `tools/rebootstrap.py`
@@ -695,16 +739,16 @@ bootstrap intervals can sit above the point estimate or fail to
 bracket it cleanly. The audit runners support a two-sided permutation
 test under the null of group-selection independence (`--n-permutations`
 flag on `tools/rebootstrap.py`); RESULTS.md reports those p-values
-alongside the bootstrap CIs at 10,000 permutations. At n = 384 with
-the shipped synthetic corpus and a gpt-4o-mini LLM extractor, two
-race-axis cells reach significance or borderline significance under
-permutation testing: major_illness × race at p = 0.029 and refugee ×
-race at p = 0.053. The same cells were marginal (p ≈ 0.07–0.08) at
-n = 192 with a gpt-5-mini scoring model. Direction-consistent across
-two corpus sizes and two scoring models, with significance tightening
-at the larger sample. Users running on smaller corpora should expect
-the percentile bootstrap to be a stability indicator rather than a
-significance test.
+alongside the bootstrap CIs at 10,000 permutations. After the
+tie-break fix on 2026-05-06 (see CHANGELOG), at n = 384 no race-axis
+or gender-axis cell reaches conventional significance under any single
+LLM scorer; one school_tier-axis cell (academic_career × school_tier)
+sits at borderline uncorrected significance (p ≈ 0.06–0.07) and is
+direction-consistent across both LLM scorer families and both LLM
+generator families in a 2×2 cross-family check. It does not survive
+multiple-comparisons correction. Users running on smaller corpora
+should expect the percentile bootstrap to be a stability indicator
+rather than a significance test.
 
 **No ground truth for the four PS questions.** Audit 2 measures
 whether the patent's four-question extractor produces systematically
@@ -740,16 +784,23 @@ retrieval-augmented systems, fine-tuned classifiers, ensemble
 approaches) are not tested. Findings that hold across SBERT and LLM
 extractors are more robust than findings that appear in only one.
 
-**The bias mitigator's failure to close gaps is a result, not a bug.**
-Audit 1 and the counterfactual decomposition both find that input-side
-anonymization (Claim 1's specified operation) does not substantially
-reduce demographic disparity in the conditions tested. This is the
-toolkit reporting what the patent's specified mitigation does on the
-synthetic corpus; it is not a proof that no mitigation could close the
-gap. Output-side recalibration (col. 24, lines 19–46) is in the patent
-spec but discretionary under Claim 1, with no algorithm specified, and
-is not implemented here. Users designing their own mitigations may
-find approaches that perform differently.
+**The bias mitigator's effect on the surviving school_tier signal is
+mixed.** Audit 1 (VADER + Claim 1 mitigator) shows no systematic
+mitigator effect on a sentiment-only pipeline (paired-permutation
+p > 0.5 on all three demographic axes), which is the expected result
+when the pipeline is largely insensitive to the markers the mitigator
+strips. The counterfactual decomposition (LLM extractor scored on
+marker-stripped PSs) shows that the academic_career × school_tier
+signal is statistically unmoved by marker-stripping (paired-permutation
+p = 0.65), while the `_total` × school_tier aggregate signal does move
+toward parity (p = 0.015). The single-question signal is content-driven
+in a sense the patent's specified anonymization step cannot reach; the
+aggregate dilutes when school markers are removed but the underlying
+academic-narrative variation remains. Output-side recalibration
+(col. 24, lines 19–46) is in the patent spec but discretionary under
+Claim 1, with no algorithm specified, and is not implemented here.
+Users designing their own mitigations may find approaches that perform
+differently.
 
 **Findings are about an architecture class, not a specific product.**
 This toolkit tests the architecture disclosed in U.S. Patent No.

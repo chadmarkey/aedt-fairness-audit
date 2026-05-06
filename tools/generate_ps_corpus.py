@@ -85,6 +85,21 @@ def main():
     )
     ap.add_argument("--temperature", type=float, default=0.7)
     ap.add_argument("--max-tokens", type=int, default=1200)
+    ap.add_argument(
+        "--prompt-variant",
+        default="original",
+        choices=["original", "content_neutral"],
+        help=(
+            "original: school_tier description includes a content cue "
+            "('research lab, faculty mentor, institution-specific program') "
+            "for top_20 and instructs voice variation across profiles. "
+            "content_neutral: school_tier description is the school name only "
+            "(no content cue) and prompt instructs that academic register / "
+            "narrative sophistication be HELD CONSTANT across school tiers. "
+            "Used to test whether the school_tier × academic_career signal "
+            "is a corpus-prompt design effect."
+        ),
+    )
     ap.add_argument("--quiet", action="store_true", help="Suppress per-PS logging")
     ap.add_argument(
         "--dry-run",
@@ -109,12 +124,14 @@ def main():
         model=args.model,
         temperature=args.temperature,
         max_tokens=args.max_tokens,
+        prompt_variant=args.prompt_variant,
     )
 
     expected = gen.expected_corpus_size()
     print(f"Generator configuration:", file=sys.stderr)
     print(f"  Provider:           {gen.provider}", file=sys.stderr)
     print(f"  Model:              {gen.model or '(provider default)'}", file=sys.stderr)
+    print(f"  Prompt variant:     {gen.prompt_variant}", file=sys.stderr)
     print(f"  Seeds:              {[s.key for s in gen.seeds]}", file=sys.stderr)
     print(f"  Races:              {gen.races}", file=sys.stderr)
     print(f"  Genders:            {gen.genders}", file=sys.stderr)
