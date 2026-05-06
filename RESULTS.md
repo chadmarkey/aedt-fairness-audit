@@ -117,9 +117,10 @@ fresh JSON + PNG/PDF figures to user-supplied `--out-dir` paths.
 | Artifact | Reference output path |
 |---|---|
 | Corpus generator | `tools/generate_ps_corpus.py` |
-| Audit 1 (VADER + Claim 1 mitigator) | `examples/reference_outputs/audit_1/audit_1_results.json` (point + bootstrap CI); `audit_1_reps1000_perm.json` (pooled bootstrap + permutation); `audit_1_strat_perm.json` (stratified bootstrap + permutation) |
-| Audit 2 SBERT | `examples/reference_outputs/audit_2/audit_2_results_sbert.json` (point + bootstrap CI); `audit_2_results_sbert_reps1000_perm.json` (pooled + perm); `audit_2_results_sbert_strat_perm.json` (stratified + perm) |
-| Audit 2 LLM | `examples/reference_outputs/audit_2/audit_2_results_llm.json` (point + bootstrap CI); `audit_2_results_llm_reps1000_perm.json` (pooled + perm); `audit_2_results_llm_strat_perm.json` (stratified + perm) |
+| Audit 1 (VADER + Claim 1 mitigator) | `examples/reference_outputs/audit_1/audit_1_results.json` |
+| Audit 2 SBERT | `examples/reference_outputs/audit_2/audit_2_results_sbert.json` |
+| Audit 2 LLM | `examples/reference_outputs/audit_2/audit_2_results_llm.json` |
+| Audit 2 LLM cross-family (claude-haiku-4-5) | `examples/reference_outputs/audit_2_crossfam/audit_2_results_llm.json` |
 | Content equivalence | `examples/reference_outputs/content_equivalence/results.json` |
 | Counterfactual decomposition | `examples/reference_outputs/counterfactual/counterfactual_decomposition.json` |
 | Screening with counterfactual (multi-model) | `examples/reference_outputs/screening_counterfactual/results_multimodel.json` |
@@ -206,57 +207,73 @@ appears to have been a small-corpus artifact.
 
 ### Audit 2 LLM (gpt-4o-mini) — PS four-question extraction
 
-Top-K = 0.30. Permutation reps = 10,000.
+Top-K = 0.30. Permutation reps = 10,000. Tie-breaking: random,
+seeded — see "About the discrete-score tie-break" below.
 
 #### Per-question DI
 
 | Question | gender | race | school_tier |
 |---|:---:|:---:|:---:|
-| poverty | 1.130 (p=0.44) | 1.200 (p=0.32) | 1.097 (p=0.63) |
-| refugee | 1.130 (p=0.45) | **0.602 (p=0.053)** | 0.938 (p=0.73) |
-| major_illness | 1.091 (p=0.58) | **0.558 (p=0.029)** | 0.938 (p=0.72) |
-| academic_career | 1.018 (p=0.91) | 0.865 (p=0.53) | 0.723 (p=0.11) |
+| poverty | 1.054 (p=0.74) | 1.036 (p=0.90) | 1.013 (p=1.00) |
+| refugee | 0.885 (p=0.51) | 0.762 (p=0.20) | 0.938 (p=0.72) |
+| major_illness | 0.983 (p=1.00) | 0.828 (p=0.37) | 0.938 (p=0.73) |
+| academic_career | 0.917 (p=0.65) | 0.944 (p=0.81) | **0.650 (p=0.059)** |
 
 #### Aggregate
 
 | Axis | DI | perm-p |
 |---|---:|:---:|
-| gender | 1.018 | 0.91 |
-| race | 1.036 | 0.90 |
-| school_tier | **0.650** | **0.059** |
+| gender | 0.983 | 1.00 |
+| race | 1.086 | 0.71 |
+| school_tier | **0.673** | **0.062** |
 
 **Per-cell findings under gpt-4o-mini scoring (n = 384):**
 
-- major_illness × race: DI = 0.558, p = 0.029 (uncorrected).
-- refugee × race: DI = 0.602, p = 0.053 (uncorrected).
-- aggregate `_total` × school_tier: DI = 0.650, p = 0.059 (uncorrected).
-- These cells are direction-consistent with the n = 192 result
-  scored with gpt-5-mini (refugee 0.507/p=0.07, major_illness
-  0.545/p=0.08): same direction, similar magnitude. Both gpt-5-mini
-  and gpt-4o-mini are OpenAI models, so this is not a cross-family
-  robustness check. The cross-family check with claude-haiku-4-5 is
-  reported below and **does not** reproduce these per-cell findings.
+- academic_career × school_tier: DI = 0.650, p = 0.059 (uncorrected).
+- `_total` × school_tier: DI = 0.673, p = 0.062 (uncorrected).
+- All race-axis cells are null (highest perm-p among race cells = 0.20
+  for refugee × race; lowest = 0.20).
+- All gender-axis cells are null.
 
-The aggregate `_total` row largely cancels the per-question race
-disparities under §530's power-2 aggregation under gpt-4o-mini scoring.
-The school_tier aggregate signal is driven by academic_career ×
-school_tier (DI = 0.723, p = 0.11).
+The school_tier signal is the only borderline-significant cell. It
+remains the case that no observed p-value clears Bonferroni or
+Benjamini–Hochberg correction at family-wise α = 0.05 with 30 tests
+across the two LLM scorers (corrected per-cell threshold ≈ 0.0017).
 
-### Audit 2 LLM cross-family robustness check (claude-haiku-4-5 scoring)
+#### About the discrete-score tie-break
+
+The LLM extractor produces **near-discrete** per-question scores: under
+gpt-4o-mini, the major_illness question takes only the values 0.0 and
+1.0; refugee takes four values; poverty seven; academic_career nine.
+Under top-K selection at K = 0.30 (115 of 384 selected), the threshold
+falls inside a tie at the boundary score. With a stable sort, ties are
+broken by the original row order, which on a stratum-blocked corpus
+biases the tie-break toward whichever stratum the corpus happens to
+list first. We discovered during a validation pass on 2026-05-06 that
+prior versions of this audit used a stable sort, which produced
+spurious race-axis DI artifacts — e.g., a reported major_illness ×
+race DI of 0.558 (p = 0.029) became DI = 0.97 ± 0.05 across ten
+random shuffles of the same data. The current audit uses random
+seeded tie-breaking (see `top_k_selection` in `audit/screening.py`),
+which eliminates the corpus-row-order bias. The race-axis "findings"
+that appeared in the prior commit history were artifacts of this bug
+and not real demographic patterns. CHANGELOG.md documents the
+discovery and fix.
+
+### Audit 2 LLM cross-family check (claude-haiku-4-5 scoring)
 
 The same n = 384 corpus, scored with `claude-haiku-4-5` instead of
-`gpt-4o-mini`, produces a different per-cell pattern. This is an
-important methodological caveat: LLM-based PS-question scoring is
-vendor-dependent.
+`gpt-4o-mini`, produces partially overlapping and partially
+divergent per-cell patterns.
 
 #### Per-question DI
 
 | Question | gender | race | school_tier |
 |---|:---:|:---:|:---:|
-| poverty | 1.054 (p=0.74) | 1.141 (p=0.46) | 0.902 (p=0.56) |
+| poverty | 1.018 (p=0.91) | 1.141 (p=0.46) | 0.974 (p=0.91) |
 | refugee | 1.130 (p=0.44) | **1.409 (p=0.052)** | 1.097 (p=0.63) |
-| major_illness | 0.983 (p=1.00) | 0.903 (p=0.60) | 1.013 (p=1.00) |
-| academic_career | 1.054 (p=0.75) | 0.903 (p=0.61) | **0.698 (p=0.070)** |
+| major_illness | 0.949 (p=0.82) | 0.989 (p=1.00) | 0.974 (p=0.91) |
+| academic_career | 1.054 (p=0.75) | 0.903 (p=0.61) | **0.673 (p=0.062)** |
 
 #### Aggregate
 
@@ -266,57 +283,67 @@ vendor-dependent.
 | race | 1.200 | 0.32 |
 | school_tier | 1.013 | 1.00 |
 
-**What changes under cross-family scoring:**
+**What is consistent across the two scorers:**
 
-- **major_illness × race** moves from DI = 0.558 (gpt-4o-mini) to
-  DI = 0.903 (claude-haiku). The disparity is essentially absent
-  under the second scorer.
-- **refugee × race** moves from DI = 0.602 to DI = 1.409. The
-  direction inverts. Under claude-haiku, the non-White stratum is
-  selected at a *higher* rate than the White stratum on this question.
-- **aggregate × school_tier** moves from DI = 0.650 to DI = 1.013.
-  The school_tier signal disappears entirely.
-- **academic_career × school_tier** moves from DI = 0.723 to
-  DI = 0.698. This one cell is similar across families and is the
-  only borderline finding (p of about 0.07) shared between scorers.
+- **academic_career × school_tier**: gpt-4o-mini DI = 0.650 (p=0.059);
+  claude-haiku DI = 0.673 (p=0.062). Both LLMs assign higher
+  academic_career scores to top-20 school applicants than to
+  lower-resource ones, at very similar magnitudes and at borderline
+  uncorrected significance. This is the only cell shared at borderline
+  significance across both scorers.
 
-**What this means.** The audit's per-cell numerical findings on
-race-axis disparity under LLM-based PS scoring **do not transfer**
-across LLM families. The same patent-specified pipeline, run on the
-same synthetic corpus with the same patent-specified mitigation,
-produces materially different per-cell demographic outcomes depending
-on which LLM answers the four PS questions. The patent does not
-specify which LLM. The cross-family check shows that choice is
-load-bearing.
+**What is divergent:**
 
-This is consistent with a peer-review critique that same-family
-generation and scoring confounds "the patent's pipeline produces a
-bias signal" with "the model family encodes stereotypes that surface
-in both generation and scoring." Under cross-family scoring, the
-stereotype-confound explanation is more parsimonious for at least
-some cells. The audit's substantive claim therefore narrows.
+- **refugee × race**: gpt-4o-mini DI = 0.762 (p=0.20, null);
+  claude-haiku DI = 1.409 (p=0.052, borderline, *opposite direction*).
+  Claude-haiku's scoring of the refugee question selects non-White
+  applicants at higher rates than White; gpt-4o-mini's scoring shows
+  no such effect. This is a real cross-family difference, but it is
+  uncorrected, in the reverse direction, and based on a single cell.
+- **`_total` × school_tier**: gpt-4o-mini DI = 0.673 (p=0.062);
+  claude-haiku DI = 1.013 (p=1.00). The school_tier aggregate signal
+  appears under gpt-4o-mini and not under claude-haiku, even though
+  the per-question driver (academic_career × school_tier) is shared.
 
-- **Original framing (n = 384, single scoring family):** "Three
-  race-axis cells fail the four-fifths range at DI ≈ 0.55–0.60 with
-  direction-consistency across two corpus sizes."
-- **Revised framing (after cross-family check):** "The patent's
-  LLM-based PS-extraction pipeline produces vendor-dependent
-  demographic outcomes. Different LLM families produce different
-  per-cell findings, in some cases on opposite axes or in opposite
-  directions. The patent's specified bias-mitigation step (Claim 1
-  input-side anonymization) does not close the per-cell gaps observed
-  under gpt-4o-mini scoring; cross-family verification of the
-  mitigation step is pending. Applicants are subject to a vendor's
-  undocumented LLM choice, and the patent's specified mitigation
-  does not, on the configurations tested, address that choice."
+**Substantive interpretation, conservative version:**
 
-The counterfactual-decomposition finding (the patent's mitigation
-does not close the gap; see *Counterfactual decomposition* in
-Validation below) was tested under gpt-4o-mini scoring at n = 384.
-The qualitative result (the mitigator does not move per-cell DI) is
-the strongest single finding in the audit at present, and it has not
-been verified under the claude-haiku-4-5 scoring run. That follow-up
-test is a planned next step.
+- **No race-axis finding survives at conventional significance under
+  any single scorer in the corrected-tiebreak audit.** The earlier
+  "vendor-dependence" headline in this section's prior version was
+  built largely on artifacts of stable-sort tie-breaking on
+  near-binary scores; that is now fixed.
+- A **shared school_tier signal** persists across both LLMs at
+  uncorrected p ≈ 0.06 for academic_career × school_tier. This is
+  the most robust finding the audit can report, and it does not
+  survive multiple-comparisons correction.
+- **A possible generator confound**: the corpus was generated with
+  gpt-4o-mini, which may have produced top-20 PSs with more
+  academic-leaning narrative content than lower-tier PSs. Both
+  scorers would then read "more academic" out of the top-20 PSs.
+  The toolkit's content-equivalence check (within-seed-across-
+  stratum cosine 0.215 vs across-seed 0.337, ratio 0.637) was
+  designed for cross-stratum content-drift detection but does not
+  isolate school_tier from race and gender. A targeted
+  generator-bias analysis would be required to distinguish
+  scoring bias from generator-induced content-correlation.
+
+The audit's substantive claim under the corrected-tiebreak audit is
+narrower than what the prior version reported:
+
+- **What the audit shows**: no statistically significant per-cell
+  demographic disparity at corrected α; one borderline shared
+  school_tier finding that may reflect generator-induced content
+  correlation rather than scoring bias.
+- **What the audit shows about the mitigator**: the patent's specified
+  Claim-1 input-side mitigation does not move the academic_career ×
+  school_tier signal (post-strip DI = 0.673 vs original 0.650 under
+  gpt-4o-mini scoring; see *Counterfactual decomposition* below). The
+  `_total` × school_tier signal moves notably toward parity post-strip
+  (0.673 → 0.807). Mixed picture.
+- **What the audit cannot show**: that any specific deployed AEDT is
+  biased on these axes. The toolkit's value at present is
+  methodological: an open framework for AEDT auditing, plus a
+  documented tie-breaking pitfall future auditors should know about.
 
 **Why bootstrap CIs are not displayed alongside the per-cell DI.** The
 audit harness computes percentile bootstrap CIs in two variants

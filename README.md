@@ -28,36 +28,52 @@ ratio below 0.80, or above 1.25 in the reverse direction).
 ### What happens when you run it
 
 These are example numbers from a 384-PS synthetic corpus covering 24
-demographic combinations. Specific values vary across runs.
+demographic combinations, scored with two LLM families (gpt-4o-mini
+and claude-haiku-4-5). Specific values vary across runs.
 
-The honest read of the audit findings, after running a cross-family
-robustness check, is two qualitative observations:
+The honest read of the audit findings:
 
-- **The patent's pipeline produces vendor-dependent demographic
-  outcomes.** Under one LLM-based PS-extraction scorer (gpt-4o-mini),
-  three cells produced selection-rate ratios outside the four-fifths
-  range at uncorrected p < 0.10 (race × major_illness, race × refugee,
-  school_tier × aggregate). Under a different LLM family
-  (claude-haiku-4-5) on the same corpus, those per-cell findings
-  largely disappear or invert. Under claude-haiku, refugee × race
-  flips from DI = 0.60 to DI = 1.41, in the opposite direction. The
-  patent does not specify which LLM is used. Applicants are therefore
-  subject to a vendor's undocumented model choice, and that choice
-  changes the demographic outcome.
-- **The patent's own bias-removal step did not close the per-cell
-  gaps under gpt-4o-mini scoring.** Applying the patent's input-side
-  anonymization leaves the major_illness × race ratio exactly
-  unchanged and *widens* the refugee × race ratio. The mitigator does
-  not reach the within-content signal the LLM extractor is reading.
-  Cross-family verification of the mitigation step (running the
-  counterfactual decomposition under claude-haiku-4-5 scoring) is a
-  planned next step.
+- **No per-cell finding survives multiple-comparisons correction.**
+  Audit 2 reports 30 hypothesis tests across the two scorers (15
+  per scorer). Under Bonferroni or Benjamini–Hochberg correction at
+  family-wise α = 0.05, the corrected per-cell threshold is ≈ 0.0017.
+  The smallest observed p-value is 0.052. No cell clears.
+- **A borderline school_tier signal is shared across both LLM
+  families.** Under both gpt-4o-mini and claude-haiku-4-5,
+  academic_career × school_tier produces a selection-rate ratio of
+  about 0.65–0.67 at uncorrected p ≈ 0.06. Top-20 school applicants
+  are selected at a higher rate than lower-resource school applicants
+  on this question. This is the only cell where both LLMs agree at
+  borderline significance. It does not survive multiple-comparisons
+  correction.
+- **The patent's specified Claim-1 mitigation barely moves the
+  school_tier signal.** After applying the patent's input-side
+  anonymization, the academic_career × school_tier ratio shifts from
+  0.650 to 0.673 — essentially unchanged. The aggregate `_total` ×
+  school_tier ratio shifts from 0.673 toward parity at 0.807; mixed
+  picture.
+- **The school_tier signal may reflect generator-induced content
+  correlation rather than scoring bias.** The synthetic corpus was
+  generated with gpt-4o-mini. If that generator wrote top-20 PSs with
+  more academic-leaning narrative content than lower-tier PSs, both
+  LLM scorers would consistently read "more academic" out of the
+  top-20 PSs, and the audit would record a school_tier signal that
+  has nothing to do with how a real AEDT scores real applicants.
+  Disentangling generator confound from real scoring bias would
+  require a generator-bias analysis the toolkit does not currently
+  ship.
 
-Under conventional multiple-comparisons correction (Bonferroni or
-Benjamini–Hochberg), no individual cell reaches corrected significance.
-The audit reports per-cell p-values uncorrected and explicitly notes
-that the substantive findings are the qualitative observations above,
-not any single cell's p-value.
+A discrete-statistic / tie-breaking pitfall was discovered and fixed
+during a 2026-05-06 validation pass. Earlier versions of the audit
+used numpy's stable sort for top-K selection, which preserves
+original row order at ties. With near-discrete LLM scores, this
+introduced a corpus-row-order bias that produced spurious per-cell DI
+findings on the race axis under gpt-4o-mini scoring. Those findings
+were artifacts. The current `top_k_selection` uses seeded random
+tie-breaking to eliminate the bias. See [`CHANGELOG.md`](CHANGELOG.md)
+for the discovery and fix; the methodology section of `RESULTS.md`
+documents the issue for any future AEDT auditor working with
+near-discrete LLM outputs.
 
 The screening-simulation tool, run on illustrative sentiment
 anchorings, produced selection-rate ratios outside the four-fifths

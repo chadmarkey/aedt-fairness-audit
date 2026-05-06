@@ -51,13 +51,42 @@ def assign_binary_group(values: pd.Series, axis_config: Dict[str, List[str]]) ->
     return out
 
 
-def top_k_selection(scores: np.ndarray, top_frac: float) -> np.ndarray:
-    """Mark top top_frac of scores as selected (1), rest 0. Stable on ties."""
+def top_k_selection(
+    scores: np.ndarray,
+    top_frac: float,
+    tiebreak_seed: int = 0,
+) -> np.ndarray:
+    """Mark top ``top_frac`` of scores as selected (1), rest 0.
+
+    Ties at the top-K boundary are broken **uniformly at random**, with
+    a deterministic seed for reproducibility. Earlier versions of this
+    function used numpy's stable sort, which preserves original array
+    order at ties. That introduced a corpus-row-order bias for
+    near-discrete score distributions: an LLM-extractor that produces
+    only {0.0, 1.0} on a given question, with the high group filling
+    the first 25% of slots and the corpus ordered by demographic
+    stratum, produced selection-rate disparities that were entirely
+    artifacts of which stratum happened to be listed first in the
+    corpus. Random tie-breaking eliminates that bias.
+
+    For statistical inference (bootstrap, permutation), pass distinct
+    ``tiebreak_seed`` values across reps if you want the inference to
+    reflect tie-break uncertainty in addition to sampling/permutation
+    uncertainty. The default behavior in ``bootstrap_di``,
+    ``permutation_test_di``, and ``paired_permutation_test_delta_di``
+    holds ``tiebreak_seed`` constant within a run for clean
+    interpretability.
+    """
     n = len(scores)
     if n == 0:
         return np.array([], dtype=int)
     k = max(1, int(round(top_frac * n)))
-    order = np.argsort(-scores, kind="stable")
+    # numpy.lexsort sorts ascending by the LAST key first, then ties
+    # broken by the second-to-last, etc. We want descending by score
+    # (high scores first), with ties broken by a random index.
+    rng = np.random.default_rng(tiebreak_seed)
+    tiebreak = rng.random(n)
+    order = np.lexsort((tiebreak, -np.asarray(scores, dtype=float)))
     selected = np.zeros(n, dtype=int)
     selected[order[:k]] = 1
     return selected

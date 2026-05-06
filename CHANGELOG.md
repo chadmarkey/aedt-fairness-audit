@@ -6,6 +6,97 @@ reconstruct how it got here without spelunking through git log.
 
 The commit history is not squashed. Every change is recoverable.
 
+## 2026-05-06 — Tie-break bug discovered and fixed; substantive claims narrowed
+
+A second-round validation pass on the surviving headline claims
+(vendor-dependence, mitigation-failure observation, screening-
+simulation findings) surfaced a real bug in the audit's selection
+function. The bug had been silently inflating the gpt-4o-mini per-cell
+race-axis findings.
+
+**The bug.** `top_k_selection` in `audit/screening.py` used
+`numpy.argsort(..., kind="stable")` to pick the top fraction of
+applicants by score. Stable sort preserves original array order at
+ties. When the LLM extractor produces near-discrete scores (under
+gpt-4o-mini, the major_illness question takes only the values 0.0
+and 1.0; refugee takes four values), top-K=0.30 selection at n=384
+forces the threshold inside a tied block at the boundary. The 19
+zero-scoring applicants who get selected as ties are pulled in
+original corpus order, which on a stratum-blocked corpus biases the
+tie-break toward whichever stratum the corpus happens to list first.
+
+**The empirical effect.** For the major_illness question, all 24
+illness-seed PSs in each race stratum scored 1.0 and all 72
+non-illness PSs in each race stratum scored 0.0. Selection rates per
+race were perfectly balanced at 0.250 by content. The 19 tie-broken
+zero-scorers all came from the White stratum because White was
+listed first in the non-illness seeds. White selection rate became
+(24+19)/96 = 0.448; non-White stayed at 24/96 = 0.250. Reported DI:
+0.558. Reported permutation p-value: 0.029. Under random shuffle of
+the same data, DI ranges 0.83–1.09 (mean 0.97). The "finding" was an
+artifact of corpus row order interacting with stable-sort
+tie-breaking.
+
+**The fix.** `top_k_selection` now uses seeded random tie-breaking
+(`numpy.lexsort` with a deterministic random secondary key from
+`np.random.default_rng(tiebreak_seed)`). Documented inline. All
+audit harnesses pick up the fix transparently.
+
+**Headline claims that did not survive the fix.**
+
+- The "vendor-dependence" framing introduced on 2026-05-05 was built
+  on race-axis cells whose magnitudes were largely artifactual.
+  Under fixed tie-break, gpt-4o-mini shows no race-axis cell at
+  uncorrected p < 0.10 (highest p among race cells = 0.20 for refugee
+  × race, DI = 0.762). The cross-family non-replication is therefore
+  not a real LLM-disagreement finding; the prior gpt-4o-mini cells
+  were mostly noise sitting in tie-break artifact.
+- "The patent's mitigation does not close the gap" remains
+  *partially* supported under the fix (academic_career × school_tier
+  barely moves after marker-stripping; `_total` × school_tier moves
+  notably toward parity), but the strong race-axis version of the
+  claim that appeared in the 2026-05-05 commit history was based on
+  artifact cells.
+
+**Headline claims that survive the fix.**
+
+- A borderline cross-family-consistent school_tier finding:
+  academic_career × school_tier under gpt-4o-mini DI = 0.650
+  (p = 0.059); under claude-haiku-4-5 DI = 0.673 (p = 0.062). Both
+  LLMs assign higher academic_career scores to top-20 school
+  applicants than to lower-resource ones, at very similar
+  magnitudes. This is the only cell shared at borderline significance
+  across both scorers. It does not survive multiple-comparisons
+  correction. It may reflect a generator confound: the corpus was
+  generated with gpt-4o-mini, and if that generator wrote top-20 PSs
+  with more academic-leaning narrative content, both scorers would
+  consistently pick that up.
+- The screening-simulation findings (synthetic n = 6,000 applicants
+  with sentiment-anchored disparities, recovery-to-parity under
+  sentiment-only counterfactual) are unaffected by the bug because
+  the simulation uses logistic-regression / linear / quadratic /
+  cubic scoring on continuous features, not near-discrete LLM
+  outputs.
+- Audit 1 (VADER pipeline + Claim 1 mitigator) is unaffected because
+  VADER produces continuous scores. Audit 2 SBERT is unaffected for
+  the same reason.
+
+**The methodological-pitfall finding itself**, surfaced and fixed
+publicly, is its own contribution. Any AEDT audit using top-K
+selection on LLM-extractor outputs that cluster at endpoints needs to
+account for tie-break behavior. Stable sort plus stratum-blocked
+corpus row order plus near-discrete scores produces spurious DI
+findings.
+
+`RESULTS.md` was rewritten to reflect the corrected picture:
+restated Audit 2 LLM tables with FIXED numbers, restated the
+cross-family section with the corrected interpretation, added a
+"discrete-score tie-break" methodological note. README plain-language
+"What happens when you run it" was rewritten to drop the
+"vendor-dependent demographic outcomes" headline and to acknowledge
+the generator-confound risk on the surviving school_tier signal.
+`examples/reference_outputs/` JSONs and figures refreshed.
+
 ## 2026-05-05 — Methodology hardening in response to external critique
 
 The day after the WIRED article ran, an external methodology critique
