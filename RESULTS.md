@@ -150,6 +150,7 @@ fresh JSON + PNG/PDF figures to user-supplied `--out-dir` paths.
 | Audit 2 LLM cross-generator (claude-haiku corpus × gpt-4o-mini scorer) | `examples/reference_outputs/audit_2_crossgen/audit_2_haikugen_gptscore.json` |
 | Audit 2 LLM cross-generator (claude-haiku corpus × claude-haiku scorer) | `examples/reference_outputs/audit_2_crossgen/audit_2_haikugen_haikuscore.json` |
 | Audit 2 LLM content-neutral prompt (gpt-4o-mini × gpt-4o-mini) | `examples/reference_outputs/audit_2_content_neutral/audit_2_neutralprompt_gptscore.json` |
+| Audit 2 fresh-corpus reproduction (full chain, 2026-05-06) | `examples/reference_outputs/audit_2_repro/` |
 | Content equivalence | `examples/reference_outputs/content_equivalence/results.json` |
 | Counterfactual decomposition | `examples/reference_outputs/counterfactual/counterfactual_decomposition.json` |
 | Screening with counterfactual (multi-model) | `examples/reference_outputs/screening_counterfactual/results_multimodel.json` |
@@ -490,14 +491,14 @@ without LLM involvement at all.
   mechanism is LLM-extractor associations between specific school
   names ("Harvard," "Stanford," "Hopkins") and academic content,
   inherited from training data.
-- **The signal does not hold across extractor architectures.** Under
-  the SBERT extractor on the same corpus, academic_career ×
-  school_tier is DI = 1.242 (lower-resource group — combined
-  lower_tier and mid_tier — selected at higher rate than top_20)
-  at p = 0.18. SBERT and the LLM extractor disagree on direction on
-  the same cell. Findings that hold across both extractors are more
-  robust than findings that appear in only one; this finding appears
-  in only the LLM extractor.
+- **The signal does not appear under SBERT on either corpus draw.**
+  Canonical SBERT showed academic_career × school_tier at DI = 1.242
+  (p = 0.18) — direction *opposite* the LLM extractor; the fresh
+  reproduction showed DI = 1.013 (p = 1.000) — no signal. Other
+  SBERT cells also flip direction across the two corpora. Read
+  together, SBERT registers corpus-draw noise rather than a
+  reproducing signal in either direction. The LLM-extractor signal
+  is the only one that replicates across two corpus draws.
 - **The earlier generator-confound caveat is narrowed**, not removed.
   The cross-generator check rules out a *pure* generator confound
   (signal disappears under a non-gpt-4o-mini generator). The
@@ -580,39 +581,99 @@ pre-register specific cells of interest, apply standard multiple-
 comparisons corrections, and run cross-family robustness checks
 before drawing inferential conclusions.
 
+### Audit 2 LLM fresh-corpus reproduction
+
+A full end-to-end reproduction was run on 2026-05-06 — fresh corpus
+generated from scratch with `gpt-4o-mini`, full audit chain re-run,
+all permutation tests at 10,000 reps. Reference outputs:
+[`examples/reference_outputs/audit_2_repro/`](examples/reference_outputs/audit_2_repro/).
+Headline cells against the canonical run:
+
+| Cell | Canonical | Fresh repro | Direction holds? |
+|---|:---:|:---:|:---:|
+| LLM × academic_career × school_tier | DI 0.650, p 0.059 | DI 0.698, p 0.069 | yes |
+| LLM × `_total` × school_tier | DI 0.673, p 0.062 | DI 0.807, p 0.238 | yes (significance softens) |
+| SBERT × academic_career × school_tier | DI 1.242, p 0.176 | DI 1.013, p 1.000 | no |
+| Content-equivalence ratio | 0.637 | 0.645 | yes |
+| Audit 1 (VADER) school_tier Δ DI | −0.092, paired-perm p 0.518 | −0.143, paired-perm p 0.170 | yes (null in both) |
+
+**What the reproduction confirms.**
+
+- The headline LLM-extractor finding (`academic_career × school_tier`,
+  DI ≈ 0.65, uncorrected p ≈ 0.06) replicates direction and magnitude
+  on a fresh corpus.
+- Race-axis and gender-axis cells remain null in the fresh run; the
+  post-tie-break-fix picture (no cell at conventional significance
+  on those axes) holds.
+- The corpus design property — within-seed cosine drift smaller than
+  across-seed drift, ratio ≈ 0.64 — is essentially identical across
+  draws.
+- Audit 1 (VADER + Claim 1 mitigator) reproduces the expected null:
+  paired-permutation p > 0.05 on every axis.
+
+**What the reproduction softens or dissolves.**
+
+- The `_total` × school_tier aggregate signal moved from borderline
+  (p = 0.062) to null (p = 0.238) on the fresh corpus. The
+  per-question signal carries; the §530 power-of-2 aggregate is more
+  sensitive to corpus draw than the per-question driver.
+- The cross-extractor disagreement framing prior to this reproduction
+  rested on canonical SBERT showing academic_career × school_tier in
+  the *opposite* direction (DI = 1.242, p = 0.176). The fresh repro
+  shows DI = 1.013, p = 1.000 — no signal at all. Across the two
+  corpora SBERT is best read as registering corpus-draw noise rather
+  than a stable opposite-direction signal. The honest cross-extractor
+  reading after this reproduction: SBERT shows no replicating signal
+  on either corpus; the LLM extractor's signal is the only one that
+  replicates.
+
+The fresh reproduction thus *strengthens* the LLM-side substantive
+claim and *narrows* the cross-extractor framing. The Cross-extractor
+observation section below has been updated accordingly.
+
 ### Cross-extractor observation
 
 The SBERT and LLM extractors produce different per-cell findings on
-the same corpus. After the 2026-05-06 tie-break fix:
+the same corpus. The picture changes meaningfully when read across
+the canonical run *and* the fresh-corpus reproduction together:
 
-- **SBERT** shows no individual cell with p < 0.10 at n = 384. Lowest
-  per-cell p is academic_career × school_tier at p = 0.18 (DI = 1.242),
-  pointing in the direction of the *lower-resource group (combined
-  lower_tier and mid_tier) selected at higher rate than top_20* on
-  the academic_career question.
-- **LLM (gpt-4o-mini)** shows academic_career × school_tier at p =
-  0.059 (DI = 0.650), pointing in the *opposite* direction — top_20
-  selected at higher rate than the lower-resource group on the same
-  question. The `_total` aggregate × school_tier sits at p = 0.062
-  (DI = 0.673).
+- **LLM (gpt-4o-mini)** produces a stable academic_career × school_tier
+  signal across both corpus draws: canonical DI = 0.650 (p = 0.059),
+  fresh repro DI = 0.698 (p = 0.069). Direction-replicates with
+  similar magnitude. Race-axis and gender-axis cells stay null on
+  both draws.
+- **SBERT** does not produce a stable signal on either corpus. The
+  canonical run had academic_career × school_tier at DI = 1.242
+  (p = 0.18) — opposite direction from the LLM extractor. The fresh
+  run shows academic_career × school_tier at DI = 1.013 (p = 1.000)
+  — no signal at all. Other SBERT cells flip direction across the two
+  draws (e.g., poverty × race: canonical DI = 0.794, fresh DI = 1.264;
+  `_total` × race: canonical 0.828, fresh 0.794, both with p > 0.20).
 
-The two extractors not only disagree on which cells are flagged; on
-the one cell that comes closest to significance under both, they
-disagree on direction. SBERT's cosine-similarity-to-exemplars approach
-and the LLM's direct question-answering approach are reading
-different signals out of the same text. The token-frequency
-diagnostic (CHANGELOG 2026-05-06 end-of-day) shows top_20 PSs contain
-1.4× to 3.6× more academic-register tokens (research, lab, faculty,
-mentor, scientist, …) than lower_tier PSs in non-academic seeds —
-content the LLM extractor reads as *more academic*, but that the
-SBERT exemplar matching apparently does not. The mechanism behind
-SBERT's directionality is not isolated by this audit.
+Read together, the most defensible cross-extractor statement is:
+**SBERT registers corpus-draw noise rather than a stable signal, on
+either direction**. The earlier "SBERT and LLM disagree on direction
+on the same cell" framing rested on a single SBERT result that does
+not replicate.
 
 The extractor architecture is an implementer's choice the patent does
 not specify; both implementations are within col. 10's "users can
-apply NLP" scope. Findings that hold across both extractors are more
-robust than findings that appear in only one. **No cell in the
-corrected audit holds direction across both extractors.**
+apply NLP" scope. Findings that hold across both extractors would be
+more robust than findings that appear in only one. **The audit's
+surviving substantive claim — academic_career × school_tier under the
+LLM extractor — replicates across two corpus draws, two LLM scoring
+families, two LLM corpus generators, and a content-neutral prompt
+rewrite. It does not appear in SBERT in either direction. The
+LLM-extractor signal is the only one that replicates.**
+
+The token-frequency diagnostic (CHANGELOG 2026-05-06 end-of-day)
+shows top_20 PSs contain 1.4× to 3.6× more academic-register tokens
+(research, lab, faculty, mentor, scientist, …) than lower_tier PSs
+in non-academic seeds. Under the content-neutral prompt this
+density-lift collapses to flat across tiers, but the LLM-extractor
+signal persists — most plausible remaining mechanism is school-name
+associations in LLM training data. SBERT's cosine-to-exemplar
+approach apparently does not register that association.
 
 ---
 

@@ -6,6 +6,85 @@ reconstruct how it got here without spelunking through git log.
 
 The commit history is not squashed. Every change is recoverable.
 
+## 2026-05-06 (full fresh-corpus reproduction + provenance appendix) — End-to-end replication and reviewer-suggested follow-ons
+
+A clean fresh-corpus reproduction of the full audit chain was run on
+the existing repo state, generating a new n = 384 corpus from scratch
+with `gpt-4o-mini` and re-running every audit (Audit 1 VADER + Claim 1
+mitigator, Audit 2 SBERT, Audit 2 LLM, rebootstrap with 10,000 perms
+on both extractors, counterfactual decomposition with paired-perm,
+content equivalence). Total cost ~$3 in API; total wall ~1 hour
+46 minutes including a one-hour corpus generation step. Reference
+outputs preserved in
+[`examples/reference_outputs/audit_2_repro/`](examples/reference_outputs/audit_2_repro/).
+
+**Headline cells, fresh vs canonical:**
+
+| Cell | Canonical | Fresh repro | Direction holds? |
+|---|:---:|:---:|:---:|
+| LLM × academic_career × school_tier | DI 0.650, p 0.059 | DI 0.698, p 0.069 | yes |
+| LLM × `_total` × school_tier | DI 0.673, p 0.062 | DI 0.807, p 0.238 | yes (significance softens) |
+| SBERT × academic_career × school_tier | DI 1.242, p 0.176 | DI 1.013, p 1.000 | no |
+| Audit 1 (VADER) school_tier Δ DI | −0.092, p 0.518 | −0.143, p 0.170 | yes (null) |
+| Content-equivalence ratio | 0.637 | 0.645 | yes |
+
+**What the reproduction confirms.** The headline LLM-extractor finding
+(`academic_career × school_tier` at DI ≈ 0.65, uncorrected p ≈ 0.06)
+direction-replicates with similar magnitude. Race-axis and gender-axis
+cells stay null on the fresh draw, confirming the post-tie-break-fix
+picture. Corpus design properties (within-seed cosine drift smaller
+than across-seed drift, ratio ≈ 0.64) are essentially identical
+across draws. Audit 1 reproduces the expected null effect of the
+mitigator on a sentiment-only pipeline.
+
+**What the reproduction softens or dissolves.**
+
+- The `_total` × school_tier aggregate signal moved from borderline
+  (canonical p = 0.062) to null (fresh p = 0.238). The per-question
+  signal carries; the §530 power-of-2 aggregate is more sensitive to
+  corpus draw than the per-question driver.
+- The earlier "cross-extractor disagreement" framing rested on
+  canonical SBERT showing academic_career × school_tier in the
+  *opposite* direction (DI 1.242, p 0.176). The fresh repro shows
+  DI 1.013, p 1.000 — no signal at all. Other SBERT cells flip
+  direction across the two corpora. SBERT registers corpus-draw
+  noise rather than a stable opposite-direction signal. The honest
+  reading: SBERT shows no replicating signal on either corpus draw;
+  the LLM-extractor signal is the only one that replicates.
+
+The substantive claim narrows further in the same direction it has
+been narrowing all along: the surviving finding is bounded to
+LLM-extractor architectures, replicates across two LLM scoring
+families, two LLM corpus generators, a content-neutral prompt rewrite,
+and now two independent corpus draws. It does not appear in SBERT in
+either direction. It does not survive multiple-comparisons correction.
+
+**README "Provenance and prior inquiry" subsection added.** External
+reviewer feedback during the day suggested making the audit's
+documentary provenance explicit in the public README. A new subsection
+under `## Why this is public` documents the cooperative-path-first
+history: the DSAR submitted under New Hampshire's Privacy Act, two
+narrow verbatim quotes of substantive representations made by a
+representative of the patent assignee in the resulting correspondence,
+the patent assignee's own publicly published Medicratic-integration
+roadmap (with cycle-by-cycle targets through the 2027 ERAS season),
+and the third-party *JAMA* Viewpoint (Bachina et al., 2026,
+doi:10.1001/jama.2026.1993) reporting that Halsted-derived technology
+is already deployed in Cortex via the Academic Interest Badge. The
+company name is not used in the README body; identification flows
+from the patent number and the publicly available citations.
+
+**Limitations consolidated.** The "Known limitations and prospective
+follow-ons" section that was hoisted to the top of the README earlier
+in the day was merged with the existing end-of-doc Limitations section
+into one block titled "Limitations and prospective follow-ons." The
+early-placement was a timing artifact of receiving reviewer feedback
+mid-flow; structurally the follow-ons belong with the technical
+reader at the end of the doc. RESULTS.md "Cross-extractor observation"
+section, "Substantive interpretation" subsection, and the README
+plain-language section all updated to reflect the post-reproduction
+reading.
+
 ## 2026-05-06 (content-neutral sensitivity test) — Signal robust to prompt-level intervention
 
 The opt-in content-neutral prompt variant added in commit `9f940d8`
