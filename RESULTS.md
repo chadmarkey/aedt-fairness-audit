@@ -48,15 +48,29 @@ gap typically dilutes to near zero when the variant is buried in a
 long surrounding document under lexicon and transformer scoring;
 LLM-judge instruments retain more of the gap.
 
-| Instrument class | Excerpt-level gap | Full-document gap | % dilution |
-|---|---:|---:|---:|
-| Lexicon-class (e.g., VADER) | ~+0.6 | ~0.0 | ~100% |
-| Transformer-class (e.g., RoBERTa-sentiment) | ~+0.2 | ~0.0 | ~100% |
-| LLM-judge variant A | ~+0.95 | ~+0.16 | ~83% |
-| LLM-judge variant B | ~+0.77 | ~+0.05 | ~94% |
+Reference numbers below are from the run committed at
+`examples/reference_outputs/dilution_test/dilution_test_results.json`,
+on the `extended_high_sentiment − extended_low_sentiment` pair (the
+larger of the two pairs in the template):
 
-Pattern: lexicon and transformer instruments fully dilute under
-whole-document scoring; LLM judges retain the gap.
+| Instrument | Excerpt gap | Full-doc gap | % dilution |
+|---|---:|---:|---:|
+| VADER (lexicon) | +0.600 | +0.000 | ~100% |
+| RoBERTa transformer | +0.282 | +0.000 | ~100% |
+| LLM-judge (gpt-4o-mini) | +0.850 | +0.000 | ~100% |
+| LLM-judge (claude-haiku-4-5) | +0.670 | +0.100 | ~85% |
+
+Pattern: lexicon, transformer, and the gpt-4o-mini LLM-judge
+fully dilute under whole-document scoring; the claude-haiku LLM-judge
+retains a measurable fraction of the gap (~15%). The two LLM-judge
+models do not behave identically — judge-architecture choice matters
+at the dilution-sensitivity level the audit tries to characterize.
+Also note: LLM-judge scores are stochastic at single-call grain;
+re-running this with claude-haiku-4-5 typically produces excerpt gaps
+in the 0.67–0.87 range and dilution ratios in the 0.10–0.15 range.
+The qualitative pattern (LLM judges retain some gap, lexicon and
+transformer fully dilute) reproduces; specific magnitudes vary with
+seed and provider.
 
 ### C. Screening simulation under multiple sentiment anchorings
 
@@ -148,12 +162,15 @@ produced by the corresponding `plots/plot_*.py` script.
 
 Corpus: 384 PSs across 4 content seeds × 4 races × 2 genders × 3 school
 tiers × 4 instances. Generated with `tools.generate_ps_corpus` using
-`gpt-4o-mini`. The same audit pipeline was also run at n=192 with
-gpt-5-mini-generated PSs and gpt-5-mini scoring; results were
-direction-consistent and individually underpowered. The n=384 + gpt-4o-mini
-configuration is reported here as the primary; the n=192 + gpt-5-mini
-configuration is described at the end of this section as a robustness
-check.
+`gpt-4o-mini`. An earlier n = 192 robustness configuration with
+gpt-5-mini-generated PSs and gpt-5-mini scoring was run before the
+2026-05-06 tie-break fix; n = 192 numbers are mentioned inline below
+(SBERT aggregate-gender, content-equivalence cosine ratio) where they
+provide useful direction-consistency context, but no full per-cell
+n = 192 table is reported because that audit was not re-run under the
+fixed tie-break. The n = 384 + gpt-4o-mini configuration is the
+primary reference; the n = 192 + gpt-5-mini reference outputs live in
+`out/` (gitignored) and are reproducible from the seeds.
 
 ### Audit 1 — Bias Mitigator effect on a VADER baseline pipeline
 
@@ -547,15 +564,21 @@ that is 30 tests. Under Bonferroni correction at family-wise α = 0.05,
 the corrected per-cell threshold is α / k. Under Benjamini–Hochberg
 FDR at q = 0.05, the rank-1 threshold is the same. None of the
 observed p-values clear either correction. **The substantive evidence
-in this audit is not any individual cell's significance.** It is two
-qualitative observations. First, under at least one LLM scoring
-family, the patent's pipeline produces per-cell DIs outside the 4/5
-range. Second, the cross-family check shows those per-cell findings
-do not stably transfer across LLM families. Different families
-produce different patterns. Users running confirmatory rather than
-exploratory analyses should pre-register specific cells of interest,
-apply standard multiple-comparisons corrections, and run cross-family
-robustness checks before drawing inferential conclusions.
+in this audit is not any individual cell's significance.** It is the
+robustness pattern of one cell across multiple sensitivity tests:
+the academic_career × school_tier signal under the LLM extractor
+holds direction across LLM scoring families (gpt-4o-mini and
+claude-haiku-4-5), across LLM corpus generators (same two), and
+across a content-neutral prompt rewrite that flattens the academic-
+register density lift in the corpus. It does *not* hold across
+extractor architectures (SBERT reads it in the opposite direction).
+This direction-replication-across-prompt/family combined with the
+architecture-dependence is what the audit can defensibly claim, and
+it is bounded to LLM-extractor architectures specifically. Users
+running confirmatory rather than exploratory analyses should
+pre-register specific cells of interest, apply standard multiple-
+comparisons corrections, and run cross-family robustness checks
+before drawing inferential conclusions.
 
 ### Cross-extractor observation
 

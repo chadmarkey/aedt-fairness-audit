@@ -142,5 +142,117 @@
         "dilution_ratio": 0.0
       }
     }
+  },
+  "llm_judge_openai_4o_mini": {
+    "scores": {
+      "baseline_low_sentiment": {
+        "excerpt": {
+          "compound": 0.0,
+          "rationale": "The statement is neutral and factual, simply reporting an event without any positive or negative connotation."
+        },
+        "full_doc": {
+          "compound": 0.85,
+          "rationale": "The tone of the text is overwhelmingly positive, highlighting the candidate's strong performance, professionalism, and readiness for residency training."
+        }
+      },
+      "baseline_high_sentiment": {
+        "excerpt": {
+          "compound": 0.0,
+          "rationale": "The statement is neutral and purely factual, without any positive or negative connotations."
+        },
+        "full_doc": {
+          "compound": 0.85,
+          "rationale": "The tone of the text is overwhelmingly positive, highlighting the candidate's strong performance, professionalism, and readiness for residency training."
+        }
+      },
+      "extended_low_sentiment": {
+        "excerpt": {
+          "compound": 0.0,
+          "rationale": "The tone is neutral, simply stating the student's choices without any positive or negative connotation."
+        },
+        "full_doc": {
+          "compound": 0.85,
+          "rationale": "The tone of the text is overwhelmingly positive, highlighting the candidate's strong performance, professionalism, and readiness for residency training."
+        }
+      },
+      "extended_high_sentiment": {
+        "excerpt": {
+          "compound": 0.85,
+          "rationale": "The tone is positive, highlighting the student's successful recovery and ongoing academic and professional achievements."
+        },
+        "full_doc": {
+          "compound": 0.85,
+          "rationale": "The tone of the text is overwhelmingly positive, highlighting the candidate's strong performance, professionalism, and readiness for residency training."
+        }
+      }
+    },
+    "gaps": {
+      "baseline_high_sentiment \u2212 baseline_low_sentiment": {
+        "excerpt_gap": 0.0,
+        "full_doc_gap": 0.0,
+        "dilution_ratio": null
+      },
+      "extended_high_sentiment \u2212 extended_low_sentiment": {
+        "excerpt_gap": 0.85,
+        "full_doc_gap": 0.0,
+        "dilution_ratio": 0.0
+      }
+    }
+  },
+  "llm_judge_anthropic_haiku": {
+    "scores": {
+      "baseline_low_sentiment": {
+        "excerpt": {
+          "compound": -0.15,
+          "rationale": "The phrase 'leave of absence for personal reasons' carries a slightly negative undertone by implying disruption or withdrawal, though the neutral phrasing prevents it from being strongly negative."
+        },
+        "full_doc": {
+          "compound": 0.68,
+          "rationale": "The evaluation uses consistently affirming language ('strong,' 'positive,' 'solid,' 'well-developed,' 'distinctive') and achievement-framing throughout, with qualifications presented as appropriate developmental growth rather than deficits, creating an overall professionally confident and achievement-oriented narrative tone."
+        }
+      },
+      "baseline_high_sentiment": {
+        "excerpt": {
+          "compound": -0.15,
+          "rationale": "The phrase 'medical leave of absence' carries a slight negative valence by implying health concerns or difficulties that necessitated stepping away, though the tone remains largely neutral and factual."
+        },
+        "full_doc": {
+          "compound": 0.68,
+          "rationale": "The narrative employs predominantly affirming language with consistent positive descriptors (strong, solid, positive, thoughtful, excellent rapport) balanced by measured, professional qualifications that acknowledge normal developmental growth, creating a tone of competence and achievement without hyperbole."
+        }
+      },
+      "extended_low_sentiment": {
+        "excerpt": {
+          "compound": 0.05,
+          "rationale": "The language is largely neutral and factual, using passive constructions and emphasizing student agency ('voluntarily,' 'chose'), with a slight positive lean from the autonomy framing rather than deficit framing, though the repetition of 'personal reasons' avoids strong valence either way."
+        },
+        "full_doc": {
+          "compound": 0.62,
+          "rationale": "The narrative uses consistently affirming language ('strong,' 'positive,' 'well-developed,' 'distinctive,' 'substantively') paired with achievement-framing throughout evaluations and concludes with an explicit residency recommendation, creating a notably confident and competent tone, though tempered by the formal, measured style of official medical evaluation documents."
+        }
+      },
+      "extended_high_sentiment": {
+        "excerpt": {
+          "compound": 0.72,
+          "rationale": "The narrative uses achievement-framing language ('full recovery,' 'good health,' 'excellent standing,' 'consistently met') and emphasizes positive outcomes and competence, though the overall tone remains somewhat formal and measured rather than celebratory."
+        },
+        "full_doc": {
+          "compound": 0.72,
+          "rationale": "The narrative employs consistently achievement-framing language with positive descriptors ('strong', 'solid', 'positive', 'excellent', 'distinctive'), emphasizes competence and growth, and explicitly recommends the candidate for residency, while maintaining the professional restraint and measured tone appropriate to a formal medical evaluation."
+        }
+      }
+    },
+    "gaps": {
+      "baseline_high_sentiment \u2212 baseline_low_sentiment": {
+        "excerpt_gap": 0.0,
+        "full_doc_gap": 0.0,
+        "dilution_ratio": null
+      },
+      "extended_high_sentiment \u2212 extended_low_sentiment": {
+        "excerpt_gap": 0.6699999999999999,
+        "full_doc_gap": 0.09999999999999998,
+        "dilution_ratio": 0.14925373134328357
+      }
+    }
   }
 }

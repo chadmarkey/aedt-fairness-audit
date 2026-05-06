@@ -527,7 +527,7 @@ laudatory recommendation letter.
 python -m tools.run_paragraph_audit \
     --document /path/to/document.txt \
     --instruments vader transformer llm \
-    --llm-provider openai --llm-model gpt-5-mini \
+    --llm-provider openai --llm-model gpt-4o-mini \
     --out out/paragraph_audit/scores.json
 ```
 

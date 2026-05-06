@@ -154,11 +154,19 @@ def main() -> int:
                       f"{fg_str:>14} {dr_str:>10}", file=sys.stderr)
 
     out_json = os.path.join(args.out_dir, "dilution_test_results.json")
+    # Recursively replace NaN with None so the output is strict-RFC-8259 JSON.
+    # json.dump by default emits the literal token `NaN`, which downstream
+    # strict parsers (including jq, jsonschema, JS JSON.parse) reject.
+    def _scrub_nan(obj):
+        if isinstance(obj, float) and np.isnan(obj):
+            return None
+        if isinstance(obj, dict):
+            return {k: _scrub_nan(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [_scrub_nan(v) for v in obj]
+        return obj
     with open(out_json, "w", encoding="utf-8") as f:
-        json.dump(
-            results, f, indent=2,
-            default=lambda x: None if (isinstance(x, float) and np.isnan(x)) else x,
-        )
+        json.dump(_scrub_nan(results), f, indent=2)
     print(f"\nWrote: {out_json}", file=sys.stderr)
     return 0
 
