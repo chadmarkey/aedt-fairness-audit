@@ -143,8 +143,12 @@ surface (smoke test, plot scripts, seeds, secrets, file paths).
 - **`examples/reference_outputs/dilution_test/dilution_test_results.json`
   contained the literal token `NaN`** — invalid per RFC 8259, rejected
   by strict JSON parsers (including Python's `json.loads` if `parse_constant`
-  isn't customized). The current tool serializes NaN as `null` correctly;
-  the committed reference file was stale. Replaced with `null`.
+  isn't customized). The committed reference file was stale; manually
+  replaced with `null`. (The tool itself was *not* serializing NaN as
+  null correctly — `json.dump` defaults emit the literal `NaN` token.
+  That tool-level bug was fixed in the 2026-05-06 Phase-4 commit
+  below; both the canonical reference file and any future dilution-
+  test runs are now strict-JSON-compliant.)
 
 ### Medium- and low-severity fixes
 
