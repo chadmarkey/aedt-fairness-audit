@@ -28,6 +28,18 @@ def percentile_ci(values: np.ndarray, alpha: float = 0.05) -> Dict[str, float]:
 
     Returns point estimate (median), mean, lower and upper CI bounds, and
     the number of non-NaN replicates.
+
+    Median is used as the displayed point estimate for outlier-robustness:
+    DI bootstrap reps can produce extreme values (e.g., 0 / 0 → NaN floor
+    cases or large numerator / small denominator cases) that would pull
+    mean. The mean is returned alongside as `mean` for users who want it.
+    For approximately symmetric bootstrap distributions, median ≈ mean and
+    both fall inside the percentile interval; for highly skewed
+    distributions, the median may sit closer to one tail than the mean. In
+    the current screening-simulation reference outputs no displayed `point`
+    falls outside `[ci_lo, ci_hi]`, but consumers handling skewed
+    distributions should prefer `mean` if they want a value the percentile
+    CI brackets by construction.
     """
     arr = np.asarray(values, dtype=float)
     arr = arr[~np.isnan(arr)]

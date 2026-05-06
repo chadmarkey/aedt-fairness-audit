@@ -45,7 +45,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import numpy as np
 import pandas as pd
 
-from audit.screening import axis_audit
+from audit.screening import (
+    DEFAULT_AXES,
+    assign_binary_group,
+    axis_audit,
+    paired_permutation_test_delta_di,
+)
 from mitigator import BiasMitigator
 from ps_extraction import LLMPSExtractor, PATENT_QUESTIONS
 
@@ -86,6 +91,9 @@ def main() -> int:
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--top-frac", type=float, default=0.3)
     ap.add_argument("--bootstrap-reps", type=int, default=1000)
+    ap.add_argument("--n-permutations", type=int, default=10000,
+                    help="Permutation replicates for the paired test of "
+                         "Delta DI per (question × axis) cell (default 10,000)")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--llm-provider", default="openai", choices=["openai", "anthropic"])
     ap.add_argument("--llm-model", default=None)
@@ -139,9 +147,24 @@ def main() -> int:
     df = df.merge(orig_scores, on="applicant_id", how="left")
     df = df.merge(stripped_df, on="applicant_id", how="left")
 
-    # Per-question DI: original vs stripped
+    # Guard against silent applicant_id mismatch between corpus and
+    # --original-scores. Left-join NaNs would otherwise propagate into
+    # axis_audit and produce misleading-looking N/A cells with no warning.
+    missing_orig = df[f"{list(PATENT_QUESTIONS.keys())[0]}_original"].isna().sum()
+    if missing_orig:
+        print(
+            f"WARNING: {missing_orig} corpus applicant_ids have no matching row "
+            f"in --original-scores={args.original_scores}. These will be dropped "
+            f"from the per-cell audit.",
+            file=sys.stderr,
+        )
+
+    # Per-question DI: original vs stripped, plus paired-permutation test
+    # of the per-(question × axis) Delta DI under the null of pre/post score
+    # exchangeability.
     decomposition: Dict[str, Dict] = {}
-    for q_key in list(PATENT_QUESTIONS.keys()) + ["_total"]:
+    score_cols = list(PATENT_QUESTIONS.keys()) + ["_total"]
+    for q_key in score_cols:
         orig_col = f"{q_key}_original"
         stripped_col = f"{q_key}_stripped"
         orig_audit = axis_audit(
@@ -156,21 +179,43 @@ def main() -> int:
             n_bootstrap=args.bootstrap_reps,
             bootstrap_seed=args.seed,
         )
+
+        delta_perm: Dict[str, Dict] = {}
+        for axis_name, col_name in AXIS_COLUMNS.items():
+            cfg = DEFAULT_AXES.get(axis_name)
+            if cfg is None:
+                continue
+            valid = ~(df[orig_col].isna() | df[stripped_col].isna())
+            if not valid.any():
+                continue
+            group = assign_binary_group(df.loc[valid, col_name], cfg)
+            delta_perm[axis_name] = paired_permutation_test_delta_di(
+                df.loc[valid, orig_col].to_numpy(),
+                df.loc[valid, stripped_col].to_numpy(),
+                group,
+                top_frac=args.top_frac,
+                n_perms=args.n_permutations,
+                seed=args.seed,
+            )
+
         decomposition[q_key] = {
             "original": orig_audit,
             "stripped": stripped_audit,
+            "delta_di_paired_permutation": delta_perm,
         }
 
     # Print decomposition table
     print("\n\nCOUNTERFACTUAL DECOMPOSITION — per-question DI: original vs marker-stripped")
-    print("=" * 92)
+    print("=" * 110)
     print(f"{'Question':<18} {'Axis':<14} {'DI(orig)':>10} {'DI(stripped)':>14} "
-          f"{'Δ':>10} {'Interpretation':<24}")
-    print("-" * 92)
+          f"{'Δ':>10} {'paired-p':>10} {'Interpretation':<24}")
+    print("-" * 110)
     for q_key, dec in decomposition.items():
         for axis in AXIS_COLUMNS:
             orig_di = dec["original"][axis]["disparate_impact"]
             strip_di = dec["stripped"][axis]["disparate_impact"]
+            perm = dec.get("delta_di_paired_permutation", {}).get(axis, {})
+            p_val = perm.get("p_value", float("nan"))
             if np.isnan(orig_di) or np.isnan(strip_di):
                 interp = "n/a"
                 delta_str = "    --"
@@ -187,10 +232,13 @@ def main() -> int:
                     interp = "mixed"
             orig_str = f"{orig_di:.3f}" if not np.isnan(orig_di) else "  N/A"
             strip_str = f"{strip_di:.3f}" if not np.isnan(strip_di) else "  N/A"
+            p_str = f"{p_val:.3f}" if not np.isnan(p_val) else "  N/A"
             print(f"{q_key:<18} {axis:<14} {orig_str:>10} {strip_str:>14} "
-                  f"{delta_str:>10} {interp:<24}")
+                  f"{delta_str:>10} {p_str:>10} {interp:<24}")
         print()
-    print("=" * 92)
+    print("=" * 110)
+    print("paired-p tests the null of pre/post score exchangeability per applicant —")
+    print("'is the Delta DI distinguishable from chance under random pre/post swaps?'\n")
 
     # Write results
     results = {
@@ -200,6 +248,7 @@ def main() -> int:
         "n_applicants": int(len(df)),
         "top_frac": args.top_frac,
         "bootstrap_reps": args.bootstrap_reps,
+        "n_permutations": args.n_permutations,
         "extractor": {
             "provider": args.llm_provider,
             "model": args.llm_model,
@@ -210,6 +259,11 @@ def main() -> int:
             "content_driven_if": "|DI(stripped) - 1.0| > 0.7 * |DI(orig) - 1.0|",
             "no_DI_to_explain_if": "|DI(orig) - 1.0| < 0.1",
         },
+        "delta_perm_test": (
+            "Paired permutation under the null of pre/post score "
+            "exchangeability per applicant. p_value = fraction of "
+            "permutations where |Delta_perm| >= |Delta_observed|."
+        ),
     }
     out_json = os.path.join(args.out_dir, "counterfactual_decomposition.json")
     with open(out_json, "w", encoding="utf-8") as fp:

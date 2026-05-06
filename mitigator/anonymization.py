@@ -61,7 +61,10 @@ ETHNICITY_PATTERNS = [
 # regex that catches "X School of Medicine", "X Medical College", etc.
 # Users may extend this list with institution-specific patterns.
 SCHOOL_PATTERNS = [
-    r"\b[A-Z][a-zA-Z]+ (?:School of Medicine|Medical School|Medical College|College of Medicine|School of Osteopathic Medicine|University School of Medicine)\b",
+    # The leading [A-Za-z] character class is intentional: re.IGNORECASE
+    # does not lower [A-Z], so a strict [A-Z] would miss lowercase-prefixed
+    # tokens that survive earlier passes (e.g., "harvard School of Medicine").
+    r"\b[A-Za-z][a-zA-Z]+ (?:School of Medicine|Medical School|Medical College|College of Medicine|School of Osteopathic Medicine|University School of Medicine)\b",
     # A small set of well-known short institution names that the generic
     # regex above does not catch. Users can extend this via custom_patterns.
     r"\bBaylor\b", r"\bColumbia\b", r"\bCornell\b", r"\bDartmouth\b",

@@ -43,12 +43,6 @@ DEFAULT_SUBSTITUTIONS: Dict[str, str] = {
     r"\bdedicated\b": "committed",
     r"\bconscientious\b": "thorough",
     r"\bmeticulous\b": "detail-oriented",
-    # Hedge-language pairs (boost weak language to neutral). Documented
-    # in the gendered-evaluation literature; each preserves the
-    # surrounding sentence's syntactic role.
-    r"\bsatisfactory\b": "strong",
-    r"\bacceptable\b": "strong",
-    r"\bcompetent\b": "highly competent",
     # Notes on substitutions intentionally NOT included here:
     # - voluntary -> approved: changes propositional content (self-
     #   initiated vs institutionally sanctioned); violates the patent's
@@ -60,6 +54,12 @@ DEFAULT_SUBSTITUTIONS: Dict[str, str] = {
     #   (success) absent from the original.
     # - overcame -> managed: weakens propositional content (victory
     #   vs adequate response).
+    # - satisfactory -> strong: escalates evaluative magnitude
+    #   (mid-grade -> high-grade). Same propositional-content issue
+    #   as completed -> successfully completed.
+    # - acceptable -> strong: same; bare-pass -> high-grade.
+    # - competent -> highly competent: adds intensifier; changes
+    #   propositional content rather than connotation.
     # Users with corpus-specific evidence justifying these substitutions
     # may add them explicitly via the `substitutions` parameter, with the
     # caveat that they go beyond Claim 1's "preserve semantic structure"

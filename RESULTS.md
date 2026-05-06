@@ -69,13 +69,25 @@ intervention: replace the disadvantaged group's narrative-tone score
 with the high-anchoring distribution and re-rank under the same
 trained model.
 
-Across the four illustrative anchorings, baseline DI sits at
-levels outside the EEOC four-fifths range under every scoring method tested (linear,
-logistic regression, patent §530 power-of-2 aggregation,
-power-of-3 aggregation). Under the sentiment-only counterfactual, DI
-recovers to within ±0.05 of parity in every cell. The patent §530
-power-of-N aggregation amplifies, rather than mitigates, the baseline
-disparity vs. linear scoring on the same anchorings.
+Under a fitted logistic-regression screening model, baseline DI on
+the four anchorings sits well outside the EEOC four-fifths range
+(point estimates 0.000 to 0.303 across cells; CIs in
+`examples/reference_outputs/screening_counterfactual/results_multimodel.json`).
+Three additional scoring rules — a linear oracle and its power-of-2
+and power-of-3 aggregation variants (modeling patent §530-style
+aggregation) — apply the data-generating betas at inference rather
+than fitting a model. They are oracle baselines, not independently
+tested algorithms; their baseline DI sits in the same band as the
+fitted model, sometimes more disparate (e.g., `instrument_a_lexicon`
+linear DI = 0.019, cubic DI = 0.000, both at the floor) and sometimes
+less (e.g., `instrument_b_transformer` linear DI = 0.302, cubic DI =
+0.439). They are useful for showing that monotone aggregation
+transforms do not by themselves close a sentiment-driven gap; they do
+not test a deployed algorithm empirically. Under the sentiment-only
+counterfactual — Group 0's `narrative_sentiment` replaced with
+high-sentiment draws, all other features held constant, the trained
+classifier held constant — DI recovers to within ±0.05 of parity in
+every cell, with bootstrap CIs that bracket 1.0.
 
 ### D. Disclosure-rate sweep
 
@@ -120,7 +132,9 @@ fresh JSON + PNG/PDF figures to user-supplied `--out-dir` paths.
 | Audit 1 (VADER + Claim 1 mitigator) | `examples/reference_outputs/audit_1/audit_1_results.json` |
 | Audit 2 SBERT | `examples/reference_outputs/audit_2/audit_2_results_sbert.json` |
 | Audit 2 LLM | `examples/reference_outputs/audit_2/audit_2_results_llm.json` |
-| Audit 2 LLM cross-family (claude-haiku-4-5) | `examples/reference_outputs/audit_2_crossfam/audit_2_results_llm.json` |
+| Audit 2 LLM cross-family (claude-haiku-4-5 scorer, gpt-4o-mini corpus) | `examples/reference_outputs/audit_2_crossfam/audit_2_results_llm.json` |
+| Audit 2 LLM cross-generator (claude-haiku corpus × gpt-4o-mini scorer) | `examples/reference_outputs/audit_2_crossgen/audit_2_haikugen_gptscore.json` |
+| Audit 2 LLM cross-generator (claude-haiku corpus × claude-haiku scorer) | `examples/reference_outputs/audit_2_crossgen/audit_2_haikugen_haikuscore.json` |
 | Content equivalence | `examples/reference_outputs/content_equivalence/results.json` |
 | Counterfactual decomposition | `examples/reference_outputs/counterfactual/counterfactual_decomposition.json` |
 | Screening with counterfactual (multi-model) | `examples/reference_outputs/screening_counterfactual/results_multimodel.json` |
@@ -305,6 +319,60 @@ divergent per-cell patterns.
   appears under gpt-4o-mini and not under claude-haiku, even though
   the per-question driver (academic_career × school_tier) is shared.
 
+### Audit 2 LLM cross-generator check (claude-haiku-4-5 corpus)
+
+The cross-family scoring check above varies the scorer but holds the
+generator constant at gpt-4o-mini. To distinguish "real content the
+LLMs read" from "content gpt-4o-mini wove into top-20 PSs that any
+scorer would pick up," a second corpus of the same n = 384 stratified
+design was generated with claude-haiku-4-5 and audited with both
+scorers. Reference outputs:
+[`examples/reference_outputs/audit_2_crossgen/audit_2_haikugen_gptscore.json`](examples/reference_outputs/audit_2_crossgen/audit_2_haikugen_gptscore.json)
+and
+[`examples/reference_outputs/audit_2_crossgen/audit_2_haikugen_haikuscore.json`](examples/reference_outputs/audit_2_crossgen/audit_2_haikugen_haikuscore.json).
+
+#### academic_career × school_tier across all four (generator × scorer) cells
+
+| Generator | Scorer | DI | perm-p |
+|---|---|---:|:---:|
+| gpt-4o-mini | gpt-4o-mini | 0.650 | 0.059 |
+| gpt-4o-mini | claude-haiku-4-5 | 0.673 | 0.062 |
+| claude-haiku-4-5 | gpt-4o-mini | 0.698 | 0.068 |
+| claude-haiku-4-5 | claude-haiku-4-5 | 0.750 | 0.127 |
+
+Direction-consistent across all four cells: top-20 school applicants
+are selected at higher rates than lower-tier on the academic_career
+question regardless of which LLM family wrote or scored the corpus.
+Magnitudes weaken slightly under the haiku-generated corpus
+(0.70/0.75 vs 0.65/0.67) and uncorrected significance softens to
+borderline at the both-flipped cell (p = 0.127). No single cell
+clears Bonferroni for four comparisons (corrected threshold ≈ 0.0125).
+
+**This narrows the generator-confound caveat.** A pure generator
+confound would predict the signal disappears under a non-gpt-4o-mini
+generator; it does not. Both LLM families write more academic
+narrative into top-20 PSs *and* both LLM families read it. The signal
+is real LLM behavior on academic-narrative content, not an artifact
+of who generated the corpus. It is still uncorrected and does not
+survive multiple-comparisons correction; the qualitative four-cell
+direction-consistency is what the audit can defend.
+
+#### `_total` × school_tier across all four cells
+
+| Generator | Scorer | DI | perm-p |
+|---|---|---:|:---:|
+| gpt-4o-mini | gpt-4o-mini | 0.673 | 0.062 |
+| gpt-4o-mini | claude-haiku-4-5 | 1.013 | 1.00 |
+| claude-haiku-4-5 | gpt-4o-mini | 1.054 | 0.81 |
+| claude-haiku-4-5 | claude-haiku-4-5 | 1.013 | 1.00 |
+
+The `_total` (patent §530 power-of-2 aggregation) signal only appears
+when both generator and scorer are gpt-4o-mini. Under any cross-
+family combination — different generator, different scorer, or both —
+the aggregate is at parity. The aggregate finding was over-stated;
+the per-question signal carries; aggregation does not propagate it
+across families.
+
 **Substantive interpretation, conservative version:**
 
 - **No race-axis finding survives at conventional significance under
@@ -312,34 +380,48 @@ divergent per-cell patterns.
   "vendor-dependence" headline in this section's prior version was
   built largely on artifacts of stable-sort tie-breaking on
   near-binary scores; that is now fixed.
-- A **shared school_tier signal** persists across both LLMs at
-  uncorrected p ≈ 0.06 for academic_career × school_tier. This is
-  the most robust finding the audit can report, and it does not
-  survive multiple-comparisons correction.
-- **A possible generator confound**: the corpus was generated with
-  gpt-4o-mini, which may have produced top-20 PSs with more
-  academic-leaning narrative content than lower-tier PSs. Both
-  scorers would then read "more academic" out of the top-20 PSs.
-  The toolkit's content-equivalence check (within-seed-across-
-  stratum cosine 0.215 vs across-seed 0.337, ratio 0.637) was
-  designed for cross-stratum content-drift detection but does not
-  isolate school_tier from race and gender. A targeted
-  generator-bias analysis would be required to distinguish
-  scoring bias from generator-induced content-correlation.
+- The **academic_career × school_tier signal** is direction-
+  consistent across all four (generator × scorer) cells at
+  uncorrected p ≈ 0.06–0.13, with a same-family cell (gpt-4o-mini gen
+  + gpt-4o-mini scorer) at p = 0.059 and a both-flipped cell
+  (claude-haiku gen + claude-haiku scorer) at p = 0.127. This is the
+  most robust finding the audit can report. It does not survive
+  multiple-comparisons correction. It is consistent with both LLM
+  families reading more academic narrative out of top-20 PSs that
+  both LLM families also wrote.
+- **The earlier generator-confound caveat is narrowed**, not removed.
+  The cross-generator check rules out a *pure* generator confound
+  (where the signal disappears under a non-gpt-4o-mini generator).
+  The signal could still reflect a shared LLM tendency to associate
+  "academic narrative" with "top-20 school," learned from training
+  data that reflects real-world correlations. The audit cannot
+  distinguish that hypothesis from "the LLMs are reading authentic
+  content variation in the synthetic corpus."
 
 The audit's substantive claim under the corrected-tiebreak audit is
 narrower than what the prior version reported:
 
 - **What the audit shows**: no statistically significant per-cell
   demographic disparity at corrected α; one borderline shared
-  school_tier finding that may reflect generator-induced content
-  correlation rather than scoring bias.
-- **What the audit shows about the mitigator**: the patent's specified
-  Claim-1 input-side mitigation does not move the academic_career ×
-  school_tier signal (post-strip DI = 0.673 vs original 0.650 under
-  gpt-4o-mini scoring; see *Counterfactual decomposition* below). The
-  `_total` × school_tier signal moves notably toward parity post-strip
-  (0.673 → 0.807). Mixed picture.
+  school_tier finding (academic_career × school_tier) that
+  direction-consistently survives a cross-generator + cross-scorer
+  robustness check (4-cell DI 0.65–0.75; uncorrected p 0.06–0.13).
+  The signal reflects LLM behavior on academic-narrative content
+  rather than a pure generator artifact. It does not survive
+  multiple-comparisons correction.
+- **What the audit shows about the mitigator**: under a paired-
+  permutation test of the per-cell Delta DI (10,000 reps; null of
+  pre/post score exchangeability per applicant), the
+  academic_career × school_tier signal is statistically unmoved by
+  marker-stripping (0.650 → 0.673, paired-perm p = 0.65). The
+  `_total` × school_tier signal does move toward parity at
+  conventional significance (0.673 → 0.807, paired-perm p = 0.015).
+  See *Counterfactual decomposition* below. The single-question
+  signal is robust to anonymization; the aggregate dilutes. Read
+  together, the picture is consistent with content-driven (rather
+  than name-driven) demographic correlation in the synthetic
+  corpus, with marker-stripping producing partial mitigation only
+  at the aggregate level.
 - **What the audit cannot show**: that any specific deployed AEDT is
   biased on these axes. The toolkit's value at present is
   methodological: an open framework for AEDT auditing, plus a
@@ -420,23 +502,42 @@ original scores per question. Tests whether the LLM extractor's
 per-question race DI is driven by demographic markers (names, schools,
 identity phrases) or by within-seed content variation.
 
-#### Race-axis decomposition (the cells with significant or borderline-significant findings)
+#### Decomposition cells under the corrected tie-break
 
-| Question | DI(original) | DI(marker-stripped) | Δ | Interpretation |
-|---|---:|---:|---:|---|
-| refugee | 0.602 | 0.538 | -0.064 | content-driven; gap *widens* post-strip |
-| major_illness | 0.558 | 0.558 | 0.000 | content-driven; *no movement* |
-| academic_career | 0.865 | 0.903 | +0.039 | content-driven |
-| _total (school_tier) | 0.650 | 0.750 | +0.100 | content-driven |
+Per-cell numbers below are recomputed with the post-fix
+seeded-random tie-break. Each cell adds a paired-permutation
+p-value on the Delta DI under the null of pre/post score
+exchangeability per applicant (10,000 reps).
 
-The two findings that reach permutation significance at n = 384
-(major_illness × race at p = 0.029, refugee × race at p = 0.053) are
-**not affected** by the patent's specified bias-removal step. Stripping
-all detectable identifying tokens leaves the major_illness disparity
-exactly unchanged and *increases* the refugee disparity. The aggregate
-school_tier signal also persists post-strip (0.650 → 0.750). The
-patent's input-side anonymization, applied as written, does not reach
-the within-content signal the LLM extractor is reading.
+| Cell | DI(original) | DI(marker-stripped) | Δ | paired-perm p | Interpretation |
+|---|---:|---:|---:|:---:|---|
+| academic_career × school_tier | 0.650 | 0.673 | +0.023 | 0.65 | content-driven; signal does not move |
+| `_total` × school_tier | 0.673 | 0.807 | +0.134 | **0.015** | aggregate moves toward parity |
+| major_illness × race | 0.828 | 0.828 | 0.000 | 1.00 | null cell; nothing to mitigate |
+| refugee × race | 0.762 | 0.731 | −0.031 | 0.86 | null cell; nothing to mitigate |
+| academic_career × race | 0.944 | 0.903 | −0.041 | 0.66 | null cell; nothing to mitigate |
+
+Read together with the cross-family check above:
+
+- **Single-question signal is robust to anonymization.**
+  academic_career × school_tier — the only borderline-significant
+  cell that replicates across both LLM scorers — does not move under
+  marker-stripping (paired-perm p = 0.65). This is consistent with
+  a content-driven signal: stripping `[SCHOOL]` from "research at
+  Harvard" leaves the academic narrative intact, and the LLM
+  extractor scores that narrative.
+- **Aggregate signal partially mitigates.** `_total` × school_tier
+  moves 0.673 → 0.807 with paired-perm p = 0.015. Marker-stripping
+  produces a real, statistically distinguishable dilution at the
+  aggregate level. The single-question school_tier driver
+  (academic_career) is unmoved, so the aggregate movement comes
+  from how marker-stripping affects the §530 power-of-2
+  recombination of all four question scores rather than from
+  closing the per-question gap.
+- **Race-axis cells are null and stay null.** No race-axis
+  question-level cell shows a meaningful pre/post Delta DI. The
+  prior version of this section reported race-axis findings; those
+  were tie-break artifacts and are removed under the fix.
 
 For reference, the patent's Claim 1 specifies the mitigation as
 detect-and-replace on identifying tokens with semantic structure

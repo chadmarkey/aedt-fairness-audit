@@ -63,6 +63,11 @@ def _counterfactual_substitute_g0(
 def _di_from_proba(test_df: pd.DataFrame, proba: np.ndarray, invite_rate: float) -> Dict[str, float]:
     n = len(proba)
     k = int(round(invite_rate * n))
+    # Stable-sort tie-break is safe here: group assignment is random
+    # (rng.integers(0, 2)) and counterfactual modification does not reorder
+    # rows. See audit/screening_simulation.py:_rank_select_top_k for the
+    # full argument and contrast with the LLM-extractor selection bug
+    # fixed in audit/screening.py.
     order = np.argsort(-proba, kind="stable")
     yhat = np.zeros(n, dtype=int)
     yhat[order[:k]] = 1

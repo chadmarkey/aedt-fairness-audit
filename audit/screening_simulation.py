@@ -230,6 +230,12 @@ def _rank_select_top_k(proba: np.ndarray, invite_rate: float):
     k = int(round(invite_rate * n))
     if k <= 0:
         return np.zeros(n, dtype=int), float("inf")
+    # Stable-sort tie-break is safe here because group is randomly assigned
+    # via rng.integers(0, 2) in generate_synthetic_applicants, so row order
+    # is uncorrelated with group membership. (Contrast with the LLM-extractor
+    # selection in audit/screening.py:top_k_selection, where the corpus is
+    # stratum-blocked and stable-sort tie-break biased toward whichever
+    # stratum was listed first; see CHANGELOG 2026-05-06.)
     order = np.argsort(-proba, kind="stable")
     invited_idx = order[:k]
     yhat = np.zeros(n, dtype=int)
@@ -315,6 +321,9 @@ def train_and_screen(
 
 
 def _percentile_ci(values: np.ndarray, alpha: float = 0.05) -> Dict[str, float]:
+    """Median as displayed point estimate, percentile bounds at alpha/2 and
+    1-alpha/2. Mean returned alongside for users handling skewed bootstrap
+    distributions; see audit/bootstrap.py:percentile_ci for the rationale."""
     arr = np.asarray(values, dtype=float)
     arr = arr[~np.isnan(arr)]
     if len(arr) == 0:

@@ -53,7 +53,12 @@ def main() -> int:
         "--model",
         default="logistic_regression",
         choices=["linear_score", "logistic_regression", "random_forest",
-                 "gradient_boosting", "svm_rbf"],
+                 "gradient_boosting", "svm_rbf",
+                 "quadratic_aggregation", "cubic_aggregation"],
+        help="Screening model. linear_score / quadratic_aggregation / "
+             "cubic_aggregation are oracle baselines that apply the DGP "
+             "betas at inference (modeling patent §530 power-of-N "
+             "aggregation); they are not fitted models.",
     )
     args = ap.parse_args()
 

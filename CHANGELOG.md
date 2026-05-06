@@ -6,6 +6,154 @@ reconstruct how it got here without spelunking through git log.
 
 The commit history is not squashed. Every change is recoverable.
 
+## 2026-05-06 (end of day) — Cross-generator validation of the school_tier signal
+
+The cross-family scoring check from 2026-05-05 varied the scorer
+(gpt-4o-mini vs claude-haiku-4-5) but held the generator constant at
+gpt-4o-mini. The "possible generator confound" caveat in RESULTS.md
+flagged this gap explicitly. To close it, a second n = 384 corpus was
+generated with claude-haiku-4-5 using the same stratified design,
+then audited with both scorers. The full 2 × 2 generator × scorer
+table for academic_career × school_tier:
+
+| Generator | Scorer | DI | perm-p |
+|---|---|---:|:---:|
+| gpt-4o-mini | gpt-4o-mini | 0.650 | 0.059 |
+| gpt-4o-mini | claude-haiku-4-5 | 0.673 | 0.062 |
+| claude-haiku-4-5 | gpt-4o-mini | 0.698 | 0.068 |
+| claude-haiku-4-5 | claude-haiku-4-5 | 0.750 | 0.127 |
+
+Direction-consistent across all four cells. Magnitudes weaken under
+the haiku-generated corpus (0.70/0.75 vs 0.65/0.67) and uncorrected
+significance softens to borderline at the both-flipped cell, but the
+qualitative pattern is robust. A pure generator confound would have
+predicted the signal disappears when the generator changes; it does
+not.
+
+The narrowed interpretation in RESULTS.md: both LLM families write
+more academic narrative into top-20 PSs *and* both LLM families read
+it. This is real LLM behavior on academic-narrative content, not an
+artifact of who generated the corpus. The audit still cannot
+distinguish "shared LLM tendency learned from real-world
+correlations in training data" from "authentic content variation the
+LLMs are reading"; for that the corpus would need to be generated
+without LLM involvement at all.
+
+The `_total` (§530 power-of-2 aggregation) signal does not transfer
+across families: it appears only in the same-family gpt-4o-mini gen
++ gpt-4o-mini scorer cell (DI 0.673, p 0.062) and is at parity in
+all three cross-family cells. The aggregate finding was over-stated;
+the per-question finding carries.
+
+Reference outputs:
+`examples/reference_outputs/audit_2_crossgen/audit_2_haikugen_gptscore.json`
+and `audit_2_haikugen_haikuscore.json`. The new corpus
+(`synthetic/data/ps_corpus_haiku_gen.jsonl`) is gitignored along
+with the gpt-4o-mini corpus per the existing repo policy; both are
+regenerable from the seeds.
+
+## 2026-05-06 (later that day) — Post-fix validation pass and follow-on cleanup
+
+A multi-agent validation pass on the post-tie-break-fix repo confirmed
+the three remaining headline claims (school_tier × academic_career
+cross-family signal, mitigation-failure observation, screening-
+simulation findings). The pass surfaced a small set of follow-on
+issues — none dissolved any finding, and several documentation gaps
+between RESULTS.md and the published reference outputs were closed.
+
+**Framing fix on the screening-simulation table.** RESULTS.md
+previously said baseline DI sat outside the EEOC four-fifths range
+"under every scoring method tested (linear, logistic regression,
+patent §530 power-of-2 aggregation, power-of-3 aggregation)" and
+that power-of-N "amplifies, rather than mitigates, the baseline
+disparity vs. linear scoring." The first claim conflated the fitted
+logistic-regression model with three oracle baselines that apply
+the data-generating betas at inference; for those three, the DI is
+arithmetic about the DGP assumptions, not an empirical algorithm
+test. The second claim is also wrong for `instrument_b_transformer`,
+where cubic DI = 0.439 is *less* disparate than linear DI = 0.302.
+RESULTS.md now distinguishes fitted from oracle scoring rules and
+reports the actual baseline-DI range (0.000 to 0.303 across cells).
+
+**Counterfactual decomposition rebuilt with paired-permutation
+support.** The `paired_permutation_test_delta_di` function existed
+in `audit/screening.py` and was wired into Audit 1, but
+`tools/counterfactual_decomposition.py` never called it; the
+"barely moves" / "moves notably toward parity" framing had no
+inferential backing. The tool now computes a paired-permutation
+p-value per (question × axis) cell under the null of pre/post
+score exchangeability per applicant. The reference output JSON was
+recomputed from cached scores (no fresh LLM extraction needed) under
+the post-fix tie-break and now ships with paired-perm p-values.
+
+The new numbers give the surviving framing real support:
+- academic_career × school_tier: DI 0.650 → 0.673, paired-perm
+  p = 0.65 (not statistically distinguishable from no effect — the
+  signal is content-driven, marker-stripping does not move it).
+- `_total` × school_tier: DI 0.673 → 0.807, paired-perm p = 0.015
+  (the aggregate signal does mitigate at conventional significance,
+  even though its single-question driver does not).
+
+**Public reference-output JSON normalization.** Both
+`examples/reference_outputs/audit_1/audit_1_results.json` and
+`examples/reference_outputs/counterfactual/counterfactual_decomposition.json`
+were silently overwritten in an earlier session with `rebootstrap.py`-
+style outputs that lack the paired-permutation results those tools
+produce. The published canonical files now contain the full
+run-tool outputs (including paired-perm cells); the prior
+rebootstrap-style schema can still be regenerated by anyone who
+runs `tools/rebootstrap.py`. Figures regenerated to match.
+
+**Three remaining evaluative-escalation substitutions removed from
+the default mitigator table.** The 2026-05-05 cleanup removed six
+substitution pairs that changed propositional content. A second
+pass identified three more in the same structural category:
+`satisfactory → strong`, `acceptable → strong`,
+`competent → highly competent`. Each escalates the evaluative
+magnitude of the source text. Removed and documented in the
+"intentionally NOT included" comment block alongside the prior six.
+The cached counterfactual scores predate this removal; the
+school_tier × academic_career and `_total` × school_tier headline
+numbers above are unchanged because these substitutions affect
+performance-evaluation language, not the academic-narrative content
+the LLM extractor reads. A fresh LLM-extractor pass would produce
+slightly different stripped scores; users who care can re-run.
+
+**SCHOOL_PATTERNS character-class fix.** The leading character class
+in the generic `[A-Z][a-zA-Z]+ (?:School of Medicine|...)` pattern
+in `mitigator/anonymization.py` did not honor `re.IGNORECASE`;
+sentence-initial lowercase institution prefixes survived the strip
+pass. Changed to `[A-Za-z]` with an inline comment.
+
+**`_percentile_ci` documentation.** `audit/screening_simulation.py`
+and `audit/bootstrap.py` use `np.median` for the displayed point
+estimate and `np.quantile` for percentile CI bounds. For highly
+skewed bootstrap distributions this can in principle put the
+displayed point outside the displayed CI; in practice no cell in
+the canonical screening-simulation reference output has this
+property. Docstrings now explain the choice and direct users
+handling skewed distributions to the alongside `mean` field.
+
+**Tie-break safety comments.** Both `audit/screening_simulation.py`
+and `tools/run_screening_with_counterfactual.py` retain
+`np.argsort(-proba, kind="stable")`. The comment now records the
+argument that this is safe in the simulation context (group is
+randomly assigned via `rng.integers(0, 2)` so corpus order is
+uncorrelated with group membership), distinguishing it from the
+bug fixed in `audit/screening.py` where the corpus was
+stratum-blocked.
+
+**`run_screening_simulation.py` now exposes
+`quadratic_aggregation` and `cubic_aggregation`** as `--model`
+choices, matching `run_screening_with_counterfactual.py`. CLI help
+flags them as oracle baselines that apply DGP betas at inference,
+not fitted models.
+
+**Silent NaN-merge guard in `counterfactual_decomposition.py`.**
+If `--original-scores` applicant IDs do not match the corpus,
+the left-join now warns to stderr with the count of unmatched
+rows rather than silently propagating NaN through the audit.
+
 ## 2026-05-06 — Tie-break bug discovered and fixed; substantive claims narrowed
 
 A second-round validation pass on the surviving headline claims
