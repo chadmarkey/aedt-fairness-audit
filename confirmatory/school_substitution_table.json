@@ -1,0 +1,55 @@
+{
+  "_purpose": "Locked substitution table for the confirmatory school-name substitution test pre-registered in CONFIRMATORY_STUDY_PREREG.md (this commit). The substitution is applied per-PS to the locked corpus before LLM scoring. Each PS's school_tier stratum (from corpus metadata) determines the placeholder tier, so the substitution preserves the school-tier signal while removing the specific school name.",
+
+  "approach": "per_ps_tier_aware",
+  "input_corpus": "synthetic/data/ps_corpus_repro.jsonl",
+  "input_corpus_locked_count": 384,
+
+  "placeholder_format": "[<TIER>_SCHOOL]",
+  "tier_label_mapping": {
+    "top_20": "TIER1",
+    "mid_tier": "TIER2",
+    "lower_tier": "TIER3"
+  },
+
+  "substitution_rules": [
+    {
+      "id": "generic_school_phrase",
+      "description": "Match any 'X School of Medicine'/'X Medical College'/etc. phrase. Replace the entire matched phrase with the PS's tier placeholder.",
+      "regex": "\\b[A-Z][a-zA-Z]+(?:\\s+[A-Z][a-zA-Z]+){0,3}\\s+(?:School of Medicine|Medical School|Medical College|College of Medicine|School of Osteopathic Medicine|University School of Medicine)\\b",
+      "flags": "case_sensitive"
+    },
+    {
+      "id": "short_name_in_medical_context",
+      "description": "Match a short institution name when it appears within 80 characters of a medical-context cue word (medical, school, university, residency, premed, pre-med, college, MD, physician, doctor, hospital). Replace the matched name (not the surrounding context) with the PS's tier placeholder. Context-anchoring prevents over-substitution of state names like 'Iowa' or city names like 'Columbia' that are not referring to the school.",
+      "short_names_inventory": [
+        "Harvard", "Stanford", "Johns Hopkins", "Hopkins", "UCSF", "Yale",
+        "Columbia", "Penn", "Duke", "Michigan", "Washington University",
+        "Cornell", "Dartmouth", "Mayo", "UCLA", "Baylor",
+        "Tulane", "Saint Louis", "Albany", "Wake Forest", "Indiana",
+        "Iowa", "Tennessee", "Emory", "Pritzker", "Perelman", "Meharry",
+        "Morehouse", "Miami Miller", "Virginia Commonwealth", "VCU",
+        "Louisville", "Boonshoft", "Wright State", "New Mexico", "Rowan",
+        "Toledo", "Wayne State", "Incarnate Word"
+      ],
+      "context_window_chars": 80,
+      "context_cue_words_regex": "\\b(?:medical|school|university|residency|pre-?med|college|MD|physician|doctor|hospital|attending|preceptor)\\b",
+      "context_cue_flags": "case_insensitive"
+    }
+  ],
+
+  "_invariants_preserved": [
+    "PS-level metadata (applicant_id, seed_key, instance, stratum_*) is NOT modified.",
+    "PS body text is the only thing changed.",
+    "School-tier stratum signal is preserved via the tier-encoded placeholder; the LLM extractor still receives the fact that the applicant is at a top_20/mid_tier/lower_tier institution. Only the specific NAME is removed.",
+    "Tie-break seed in audit/screening.py:top_k_selection remains 0.",
+    "Top-K selection fraction remains 0.30."
+  ],
+
+  "_known_limitations": [
+    "Short-name context-anchoring is a heuristic. A school name within 80 characters of a medical-context cue word will be substituted; outside that window, it will not. This may miss some references and over-include others. The window size and cue word list are locked at this commit.",
+    "Corpus-noise: the LLM-generated corpus places the same institution name in multiple tier strata (e.g., 'Morehouse' appears in both mid_tier and lower_tier). The PS-specific tier-aware substitution handles this correctly: each occurrence is substituted with its OWN PS's tier placeholder, regardless of where else the name appears in the corpus."
+  ],
+
+  "_pre_registration_lock": "This file is sealed at the pre-registration commit. Any deviation between this specification and the executed analysis is required to be documented in the eventual results writeup with a stated reason and an analysis of impact on inference."
+}

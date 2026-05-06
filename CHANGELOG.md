@@ -6,6 +6,49 @@ reconstruct how it got here without spelunking through git log.
 
 The commit history is not squashed. Every change is recoverable.
 
+## 2026-05-06 (confirmatory study pre-registration) — Phase 2 sealed before data collection
+
+A pre-registration document for the confirmatory follow-up study
+is committed at `CONFIRMATORY_STUDY_PREREG.md` alongside the locked
+substitution table at `confirmatory/school_substitution_table.json`.
+
+The pre-registration commits, in advance, to a single primary test
+of the v1 audit's surviving school_tier × academic_career signal:
+a tier-aware school-name substitution applied to the locked n=384
+fresh corpus, followed by re-scoring with the gpt-4o-mini LLM
+extractor, followed by a two-sided permutation test of the
+post-substitution disparate impact at α = 0.05 with 10,000
+permutations.
+
+Decision rule (sealed before any data is generated):
+
+- **H1 supported** (signal is school-name-driven) if post-
+  substitution DI ≥ 0.80.
+- **H0 supported** (signal robust to name substitution) if
+  post-substitution DI < 0.80 with permutation p ≤ 0.10.
+- **Ambiguous** if post-substitution DI in [0.65, 0.80) with
+  permutation p > 0.10. Reported transparently with no claim of
+  confirmation.
+
+The substitution table preserves each PS's school_tier signal via
+tier-encoded placeholders (`[TIER1_SCHOOL]`, `[TIER2_SCHOOL]`,
+`[TIER3_SCHOOL]`), so the LLM extractor still receives tier
+information; only the specific institutional name is removed. The
+intervention is symmetric across tiers and addresses the asymmetry
+in v1's `mitigator/anonymization.py` short-name list.
+
+This pre-registration converts the v1 audit's post-hoc-narrowed
+substantive claim into a confirmatorily-testable hypothesis with a
+sealed analysis plan. Whatever the result, it will be reported.
+External supplementary pre-registration on the Open Science
+Framework and a Wayback Machine snapshot of the commit URL are
+planned post-commit; the GitHub commit timestamp itself is the
+primary registration timestamp.
+
+This is the last v1-repository commit relating to substantive
+methodology. Execution of the pre-registered analysis lives in
+`CONFIRMATORY_RESULTS.md` (not yet created).
+
 ## 2026-05-06 (full fresh-corpus reproduction + provenance appendix) — End-to-end replication and reviewer-suggested follow-ons
 
 A clean fresh-corpus reproduction of the full audit chain was run on

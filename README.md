@@ -1025,7 +1025,14 @@ questions.
    confirmatory follow-up should pre-register the academic_career ×
    school_tier cell as the primary endpoint, set the multiple-
    comparisons threshold up front, and report only that cell as the
-   confirmatory test.
+   confirmatory test. **A pre-registration committing to such a
+   confirmatory test, including a school-name substitution
+   intervention as the primary mechanism test, is committed at
+   [`CONFIRMATORY_STUDY_PREREG.md`](CONFIRMATORY_STUDY_PREREG.md)
+   alongside the locked substitution table at
+   [`confirmatory/school_substitution_table.json`](confirmatory/school_substitution_table.json).
+   The pre-registered analysis has not been executed at this
+   commit.**
 
 4. **More explicit multiple-comparisons handling in headline framing.**
    The current README/RESULTS prominently note that no cell clears
