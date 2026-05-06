@@ -6,6 +6,28 @@ reconstruct how it got here without spelunking through git log.
 
 The commit history is not squashed. Every change is recoverable.
 
+## 2026-05-06 (OSF registration completed) — External pre-registration timestamp
+
+The confirmatory-study pre-registration committed at `de8c291` was
+deposited on the Open Science Framework and made publicly available:
+
+- OSF registration: https://osf.io/vwyjm/
+- OSF parent project: https://osf.io/uk6xn/
+
+The full pre-registration document was pasted into the registration
+description; the document and the locked substitution table were
+also uploaded as registered files. Public release was set to
+immediate (no embargo), so the methodology is third-party-timestamped
+and publicly accessible from the OSF deposit independent of this
+repository.
+
+`CONFIRMATORY_STUDY_PREREG.md` updated with the OSF URLs in the
+"External pre-registration" section (was a forward-looking
+placeholder; now records actual completion).
+
+This is the closing v1 commit. Execution of the pre-registered
+analysis lives in `CONFIRMATORY_RESULTS.md`, not yet created.
+
 ## 2026-05-06 (confirmatory study pre-registration) — Phase 2 sealed before data collection
 
 A pre-registration document for the confirmatory follow-up study

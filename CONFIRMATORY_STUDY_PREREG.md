@@ -244,23 +244,29 @@ Contact: chad.markey11@gmail.com.
 
 ---
 
-## External pre-registration (post-commit)
+## External pre-registration (completed 2026-05-06)
 
-After this file is committed to `main`, the author will:
+The pre-registration has been deposited on the Open Science
+Framework (`osf.io`) and is publicly accessible:
 
-1. Submit the GitHub URL of this commit to the Wayback Machine
-   (`web.archive.org/save/<commit URL>`) for a third-party-controlled
-   timestamp on the public-facing artifact.
-2. Create an Open Science Framework (`osf.io`) project and
-   registration for this study, paste the contents of this file
-   into the registration's body, and link the GitHub commit URL
-   from the OSF registration. The OSF DOI (once assigned) will be
-   added to this file as a one-line amendment commit.
+- **OSF registration:** <https://osf.io/vwyjm/>
+- **OSF parent project:** <https://osf.io/uk6xn/>
+- **Underlying GitHub commit:** `de8c291` on `main` of
+  <https://github.com/chadmarkey/aedt-fairness-audit>
+
+The OSF registration was filed under the "Open-Ended Registration"
+template with public release set to immediate (no embargo). The
+contents of this document were pasted in full into the registration
+description; both this document and `confirmatory/school_substitution_table.json`
+were uploaded as registered files.
+
+A Wayback Machine snapshot of the GitHub commit URL has also been
+captured for additional third-party-controlled timestamping.
 
 These supplementary timestamps strengthen the public-record
-character of the pre-registration; they are not independently
-required for the methodological commitment, which is established
-at the public commit timestamp.
+character of the pre-registration; the methodological commitment
+itself is established at the public GitHub commit timestamp and the
+OSF registration timestamp.
 
 ---
 
