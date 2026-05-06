@@ -1,9 +1,10 @@
 """Semantic-similarity extractor for the patent's four PS questions.
 
-For each personal statement, computes a per-question score in [0, 1]
-reflecting semantic closeness to each question's exemplar(s). Implements
-the patent's prescribed approach (col. 22-23): SBERT embedding,
-cosine-similarity scoring, threshold-gated soft assignment.
+For each personal statement, computes a per-question score in [0, ∞)
+(sums of softmax-weighted cosine similarities across sentences, raised
+to a fixed power per patent §530). Implements the patent's prescribed
+approach (col. 22-23): SBERT embedding, cosine-similarity scoring,
+threshold-gated soft assignment.
 
 Returns a per-applicant DataFrame with one column per question plus an
 aggregate score per the patent's §530 weighted aggregation.

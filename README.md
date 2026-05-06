@@ -165,26 +165,69 @@ the audit's substantive claim and is described in full in
 
 ## Why this is public
 
-This repo is public because there was no other way to do it. I asked
-Thalamus, the patent's assignee, for the data and processing details
-on their pipeline. The vehicle was a Data Subject Access Request under
-New Hampshire's Privacy Act, RSA 507-H. They declined at the 45-day
-deadline. The grounds were jurisdictional. RSA 507-H sets volume
-thresholds for which companies the law reaches, and the company argued
-that too few of New Hampshire's 1.4 million residents use their
-products to clear those thresholds. So the privacy law that should
-have governed the request did not apply. I appealed under §507-H:4(IV)
-on May 4, 2026. That appeal is its own record now.
+This repo is public because there was no other way to do it. The
+patent's current assignee was asked, via Data Subject Access Request
+under New Hampshire's Privacy Act (RSA 507-H), for the data and
+processing details that would let an outside auditor verify how the
+pipeline runs in practice. The request was declined at the 45-day
+statutory deadline. The grounds were jurisdictional: RSA 507-H sets
+volume thresholds for which companies the law reaches, and the
+assignee argued that too few of New Hampshire's 1.4 million residents
+use their products to clear those thresholds. So the privacy law that
+should have governed the request did not apply. I appealed under
+§507-H:4(IV) on May 4, 2026. That appeal is its own record now.
 
-What was left was to rebuild the patent's pipeline from public
-components and audit it. Patent text, off-the-shelf libraries,
-synthetic test data. That is the toolkit.
+What was left was to rebuild the patent's specified pipeline from
+public components and audit it. Patent text (U.S. Patent No.
+12,265,502 B1), off-the-shelf libraries, synthetic test data. That is
+the toolkit.
+
+**This is an audit, not an indictment.** The toolkit measures whether
+the patent's specified architecture produces equal outcomes on
+synthetic data. It does not claim that any specific deployed AEDT —
+including any product made by the patent's current assignee —
+implements that architecture in the same way, uses the same
+parameters, or produces the same outcomes. Inference from toolkit
+results to deployed products requires independent evidence about
+those products.
+
+**The repo is fully public and the commit history is intact.** Nothing
+has been squashed; nothing has been force-pushed; every methodology
+revision is documented in [`CHANGELOG.md`](CHANGELOG.md), including
+the corrections that have narrowed initial findings:
+
+- A stable-sort tie-break bug discovered on 2026-05-06 dissolved a
+  "vendor-dependent race-axis disparity" headline that turned out to
+  be an artifact. The bug, the fix, and the dissolved findings are
+  all documented and remain reproducible from prior commits.
+- A cross-family scoring check disclosed on 2026-05-05 in response
+  to peer review showed per-cell race-axis findings did not transfer
+  across LLM scoring families. Framing was narrowed.
+- A cross-generator validation check confirmed the surviving
+  school_tier signal direction-replicates across two LLM generator
+  families.
+- A close audit of the corpus generator prompt found the prompt
+  itself encodes school-tier-correlated content; an opt-in
+  content-neutral prompt variant ships as a sensitivity test.
+- An SBERT-vs-LLM cross-extractor check showed the two extractor
+  architectures disagree on direction on the surviving cell. The
+  surviving claim is bounded to LLM-extractor architectures
+  specifically.
+
+Each of these refinements happened because someone pushed back —
+public critique on Reddit, private code review and methodology
+advice from independent reviewers reaching out off-channel, or a
+closer look at the code itself. That is what this kind of audit is
+for. Real-time methodology audit, in public, with corrections
+visible — that is the lens this work has needed all along, and it
+has been rare in AEDT validation generally. The fact that initial
+findings were refined under that scrutiny is the point of releasing
+the toolkit, not a weakness.
 
 Critiques and replication failures are welcome. File them as GitHub
-Issues. The repo has already narrowed its substantive claims in
-response to one external critique (see [`CHANGELOG.md`](CHANGELOG.md)).
-I expect more of that. The work gets better when the methodology
-iterates in public.
+Issues. The substantive claims of this audit have narrowed several
+times and will likely narrow again. The work gets better when the
+methodology iterates in public.
 
 ## Components
 
@@ -742,9 +785,10 @@ outputs should be read.
 LLM-generated personal statements stratified across demographic
 combinations. The corpus is designed so within-seed content is held
 approximately constant across demographic strata; this is validated by
-pairwise SBERT distance (within-seed-across-stratum mean cosine 0.253
-vs. across-seed mean 0.411, ratio 0.615). The separation is meaningful
-but not overwhelming. The generator may leak content along with
+pairwise SBERT distance (within-seed-across-stratum mean cosine 0.215
+vs. across-seed mean 0.337, ratio 0.637; n = 384). The separation is
+meaningful but not overwhelming. The generator may leak content along
+with
 demographic markers in ways the cosine check does not catch. Findings
 should be read as "this is what happens when the patent's architecture
 is run on a corpus designed to isolate demographic markers from

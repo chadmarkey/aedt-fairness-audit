@@ -11,8 +11,11 @@ questions. The patent enumerates four example questions:
 
 This module implements the four-question extractor as semantic-similarity
 attribute indicators against an SBERT embedding space. For each PS, each
-question receives a score in [0, 1] reflecting semantic closeness to the
-question's exemplar(s).
+question receives a score in [0, ∞) reflecting semantic closeness to the
+question's exemplar(s) — sums of softmax-weighted cosine similarities
+across sentences, raised to a fixed power per patent §530. The LLM
+extractor variant (`llm_extractor.py`) caps at the LLM's per-question
+probability and so returns scores in [0, 1].
 
 The four questions are themselves discriminatory in framing — they probe
 protected-class proxies (poverty correlates with race/SES; refugee status

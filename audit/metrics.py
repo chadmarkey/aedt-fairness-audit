@@ -259,16 +259,29 @@ def write_audit_report(report: Dict, out_path: str) -> None:
 
 
 def model_suite_summary(model_metrics: Dict[str, Dict]) -> Dict[str, Dict[str, float]]:
-    """Summarize across model architectures for cross-model robustness checks."""
+    """Summarize across model architectures for cross-model robustness checks.
+
+    Reads the keys that `disparity_summary` actually emits. Earlier
+    versions of this function read `disparate_impact` directly off the
+    nested metrics dict, which silently returned None for every cell
+    because `disparity_summary` emits `selection_rate_ratio_group0_over_group1`.
+    """
     summary = {}
     for model_name, metrics in model_metrics.items():
         baseline = metrics.get("baseline", {})
         cf_fixed = metrics.get("counterfactual_fixed_threshold", {})
         cf_rethresh = metrics.get("counterfactual_rethresholded", {})
+
+        def _di(d: Dict) -> Optional[float]:
+            # disparity_summary emits this key; fall back to direct
+            # disparate_impact for callers that pass a different shape.
+            return d.get("selection_rate_ratio_group0_over_group1",
+                         d.get("disparate_impact"))
+
         summary[model_name] = {
-            "baseline_disparate_impact": baseline.get("disparate_impact"),
-            "cf_fixed_disparate_impact": cf_fixed.get("disparate_impact"),
-            "rethresh_disparate_impact": cf_rethresh.get("disparate_impact"),
+            "baseline_disparate_impact": _di(baseline),
+            "cf_fixed_disparate_impact": _di(cf_fixed),
+            "rethresh_disparate_impact": _di(cf_rethresh),
             "baseline_equal_opportunity_difference": baseline.get("equal_opportunity_difference"),
             "cf_fixed_equal_opportunity_difference": cf_fixed.get("equal_opportunity_difference"),
             "rethresh_equal_opportunity_difference": cf_rethresh.get("equal_opportunity_difference"),

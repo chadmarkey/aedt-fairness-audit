@@ -62,7 +62,7 @@
       "baseline_high_sentiment \u2212 baseline_low_sentiment": {
         "excerpt_gap": 0.0,
         "full_doc_gap": 0.0,
-        "dilution_ratio": NaN
+        "dilution_ratio": null
       },
       "extended_high_sentiment \u2212 extended_low_sentiment": {
         "excerpt_gap": 0.6004,

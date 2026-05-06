@@ -6,6 +6,110 @@ reconstruct how it got here without spelunking through git log.
 
 The commit history is not squashed. Every change is recoverable.
 
+## 2026-05-06 (forensic audit batch) — Pre-flip cleanup pass
+
+Three parallel forensic agents reviewed (a) the algorithmic code paths
+that had not been audited (`tools/run_dilution_test.py`,
+`tools/run_paragraph_audit.py`, `tools/content_equivalence.py`,
+`ps_extraction/llm_extractor.py`, `ps_extraction/extractor.py`,
+`audit/metrics.py`), (b) doc consistency between RESULTS.md / README.md
+and the canonical reference outputs, and (c) operational + risk
+surface (smoke test, plot scripts, seeds, secrets, file paths).
+
+### High-severity fixes (public-facing)
+
+- **`RESULTS.md` paragraph audit table sign error**: leave-of-absence
+  RoBERTa transformer score was reported as `+0.04`. Canonical JSON
+  has `-0.0389` — the value is negative. RESULTS.md now reads `−0.04`.
+- **`RESULTS.md` content-equivalence pair count error**: within-seed-
+  across-stratum pairs reported as 17,856. Canonical JSON has 17,664
+  (the 17,856 figure was the stale n=192 calculation that was never
+  refreshed when the corpus grew to n=384). RESULTS.md now reads
+  17,664.
+- **`RESULTS.md` reproduction commands using stale model**: the n=384
+  reproduction block at the end of RESULTS.md still passed
+  `--llm-model gpt-5-mini` for both Audit 2 LLM and counterfactual
+  decomposition. The canonical n=384 reference outputs were generated
+  with `gpt-4o-mini`. Following RESULTS.md literally would not have
+  reproduced the numbers it reports. Both commands now pass
+  `gpt-4o-mini`. The counterfactual reproduction command also now
+  passes `--n-permutations 10000` so it produces the paired-perm
+  cells RESULTS.md cites.
+- **`README.md` Limitations section using stale n=192 cosine numbers**:
+  the synthetic-corpus content-equivalence numbers (0.253 / 0.411 /
+  0.615) were from the n=192 robustness check. Canonical n=384 values
+  are 0.215 / 0.337 / 0.637; README now uses those.
+- **`DEVIATIONS_FROM_PATENT.md` substitution table out of date**: the
+  doc still listed five substitution categories (communal/agentic,
+  performance-descriptor, leave-of-absence, hedge-language,
+  concession-framing), with the performance-descriptor pairs all
+  collapsing onto `→ high-performing`. The current
+  `DEFAULT_SUBSTITUTIONS` table has TWO categories with ten distinct
+  connotation-only pairs; the three removed categories were excised
+  on 2026-05-05 / 2026-05-06 after the methodology audit found they
+  changed propositional content rather than just connotation, and the
+  performance-descriptor mappings were remapped to distinct neutral
+  terms (`→ thorough`, `→ committed`, `→ detail-oriented`,
+  `→ effective`). The doc is rewritten to match current code; the
+  removed categories are explicitly listed as "intentionally NOT
+  included" with the rationale.
+- **`examples/reference_outputs/dilution_test/dilution_test_results.json`
+  contained the literal token `NaN`** — invalid per RFC 8259, rejected
+  by strict JSON parsers (including Python's `json.loads` if `parse_constant`
+  isn't customized). The current tool serializes NaN as `null` correctly;
+  the committed reference file was stale. Replaced with `null`.
+
+### Medium- and low-severity fixes
+
+- `audit/metrics.py:model_suite_summary` was reading the key
+  `disparate_impact` from the nested metrics dict, but
+  `disparity_summary` emits `selection_rate_ratio_group0_over_group1`.
+  Every call returned None for every DI field. Function now reads the
+  emitted key with a fallback for callers that pass a different shape.
+- `tools/run_dilution_test.py` multi-Anthropic-instrument config bug:
+  `inst.startswith("llm_judge_anthropic")` resolved to a single shared
+  `llm_judge_anthropic_model` config slot, making it impossible to
+  configure two Anthropic instruments at different models in one run.
+  Fixed with per-instrument-name lookup that falls back to the
+  provider-level default. Same fix for the OpenAI variant.
+- `tools/run_paragraph_audit.py:unanimous_lowest` was returning True
+  for single-instrument runs (one instrument cannot be unanimous
+  across instruments). Now requires `len(instruments) >= 2`.
+- `ps_extraction/__init__.py` and `ps_extraction/extractor.py`
+  module docstrings claimed SBERT extractor scores were in `[0, 1]`.
+  The actual range is `[0, ∞)`. Corrected; LLM extractor's [0, 1]
+  range is also documented for contrast.
+- `DEVIATIONS_FROM_PATENT.md` line 216 internal inconsistency
+  (gpt-5-mini default vs gpt-4o-mini in line 135) clarified: the
+  code-level default is gpt-5-mini, but the canonical n=384 reference
+  outputs were generated with `--llm-model gpt-4o-mini` (the n=192
+  robustness check used gpt-5-mini).
+
+### Operational / risk surface — clean
+
+- `.env.example` is a template (no real keys committed); repo-wide
+  grep finds no leaked API keys, tokens, or credentials.
+- Seeds are plumbed throughout (`tiebreak_seed`, `bootstrap_seed`,
+  `permutation_seed`); deterministic given a fixed seed.
+- Plot scripts contain no stale `gpt-5-mini` references that would
+  appear in figure titles.
+- `tools/smoke_test.py` runs end-to-end and exits 0.
+- All `examples/reference_outputs/*` paths referenced in RESULTS.md
+  resolve on disk.
+
+### Findings that turned out to be wrong on re-verification
+
+- An agent flagged `tools/content_equivalence.py:186-192` as having
+  "two independent if blocks rather than if/elif/else" with broken
+  boundary behavior. The code is actually a chained ternary; boundary
+  behavior is intentional (ratio = 0.7 and 0.9 both fall in the
+  "Marginal" gray zone). No fix.
+- An agent flagged `ps_extraction/extractor.py:96` docstring as
+  saying `[0, 1]`. The function docstring already says `[0, ∞)`.
+  The stale claim was at the module-level docstring (line 3 of the
+  same file) and at `ps_extraction/__init__.py:14`; those were the
+  ones fixed.
+
 ## 2026-05-06 (continued) — Prompt-design diagnostic, cross-extractor disagreement, doc freshness
 
 After the cross-generator validation landed, a closer audit of the

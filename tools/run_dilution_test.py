@@ -80,11 +80,19 @@ def build_scoring_fns(config: dict) -> Dict[str, Callable[[str], Dict[str, float
             out["transformer"] = transformer.score
         elif inst.startswith("llm_judge_anthropic"):
             from sentiment import llm_judge
-            model = config.get("llm_judge_anthropic_model", "claude-sonnet-4-5")
+            # Per-instrument model lookup first, then provider-level
+            # default. Lets a config use multiple Anthropic instruments
+            # at different models (e.g., llm_judge_anthropic_haiku and
+            # llm_judge_anthropic_sonnet) in a single run.
+            model = config.get(f"{inst}_model") or config.get(
+                "llm_judge_anthropic_model", "claude-sonnet-4-5"
+            )
             out[inst] = lambda t, m=model: llm_judge.score(t, provider="anthropic", model=m)
         elif inst.startswith("llm_judge_openai"):
             from sentiment import llm_judge
-            model = config.get("llm_judge_openai_model", os.environ.get("OPENAI_MODEL", "gpt-4o"))
+            model = config.get(f"{inst}_model") or config.get(
+                "llm_judge_openai_model", os.environ.get("OPENAI_MODEL", "gpt-4o")
+            )
             out[inst] = lambda t, m=model: llm_judge.score(t, provider="openai", model=m)
         else:
             raise ValueError(f"Unknown instrument: {inst}")

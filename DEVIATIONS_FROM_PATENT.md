@@ -67,28 +67,47 @@ The patent specifies the goal but not the algorithm. This implementation:
 > term)."
 
 The patent specifies the goal but not the algorithm or term inventory.
-This implementation provides a default lookup table covering five
-substitution categories. Each category lists representative pairs from
-the default table; the full table is in
-`mitigator/semantic_substitution.py:DEFAULT_SUBSTITUTIONS`.
+This implementation provides a default lookup table covering two
+substitution categories of connotation-only pairs. The full table is
+in `mitigator/semantic_substitution.py:DEFAULT_SUBSTITUTIONS`.
 
-- Communal/agentic language pairs (Madera, Hebl, Martin 2009, JAP):
-  `caring` → `skilled`, `nurturing` → `competent`, `pleasant` →
-  `professional`
-- Performance-descriptor language pairs:
-  `diligent` → `high-performing`, `meticulous` → `high-performing`,
-  `dedicated` → `high-performing`
-- Leave-of-absence phrasing pairs:
-  `voluntary` → `approved`, `personal reasons` → `approved reasons`
-- Hedge-language pairs:
-  `completed` → `successfully completed`, `satisfactory` → `strong`,
-  `acceptable` → `strong`
-- Concession-framing pairs:
-  `despite` → `with`, `overcame` → `managed`, `struggled` → `worked
-  through`
+- **Communal/agentic language pairs** (Madera, Hebl, Martin 2009, JAP):
+  `caring` → `skilled`, `nurturing` → `competent`,
+  `warm` → `professional`, `helpful` → `effective`,
+  `pleasant` → `professional`. Each pair preserves a distinct
+  semantic neighborhood; multiple distinct adjectives are not
+  collapsed onto a single neutral term.
+- **Performance-descriptor pairs**: `diligent` → `thorough`,
+  `hardworking` → `effective`, `dedicated` → `committed`,
+  `conscientious` → `thorough`, `meticulous` → `detail-oriented`.
+  Each descriptor maps to a distinct agentic equivalent rather than
+  collapsing onto a single shared term.
+
+Three additional categories that appeared in earlier versions of this
+table were removed during the 2026-05-06 cleanup pass after a
+methodology audit found they violated Claim 1's "preserve semantic
+structure" requirement:
+
+- **Leave-of-absence phrasing** (e.g., `voluntary` → `approved`,
+  `personal reasons` → `approved reasons`): changes propositional
+  content (self-initiated vs. institutionally sanctioned).
+- **Hedge / evaluative-language escalations** (e.g., `completed` →
+  `successfully completed`, `satisfactory` → `strong`,
+  `acceptable` → `strong`, `competent` → `highly competent`): adds
+  factual claims or escalates evaluative magnitude.
+- **Concession-framing** (e.g., `despite` → `with`, `overcame` →
+  `managed`, `struggled` → `worked through`): flips logical
+  structure or weakens propositional content.
+
+These removed pairs are documented as "intentionally NOT included" in
+the source comment block in `mitigator/semantic_substitution.py`. See
+CHANGELOG entries for 2026-05-05 and 2026-05-06 (continued) for the
+review that surfaced them.
 
 The default table is the implementer's choice; users may extend or
-replace it via the `substitutions` parameter.
+replace it via the `substitutions` parameter, with the caveat that
+substitutions changing propositional content go beyond Claim 1's
+"preserve semantic structure" requirement.
 
 ### Output-side correction (col. 24, lines 19–46) — not implemented
 
@@ -213,4 +232,4 @@ This matches the patent's element ordering.
 | §528 cosine similarity | `ps_extraction/extractor.py` | Patent-enumerated metric |
 | §528 zero/one/multi sentence contribution | `ps_extraction/extractor.py` | Direct match |
 | §530 power-of-2 aggregation | `ps_extraction/extractor.py` | Direct match (default power=2.0) |
-| §PS Component LLM-based answering | `ps_extraction/llm_extractor.py` | Within patent's "users can apply NLP"; defaults gpt-5-mini / claude-haiku-4-5 |
+| §PS Component LLM-based answering | `ps_extraction/llm_extractor.py` | Within patent's "users can apply NLP"; code-level default gpt-5-mini for OpenAI / claude-haiku-4-5 for Anthropic. Canonical n=384 reference outputs in `examples/reference_outputs/audit_2/` were generated with `--llm-model gpt-4o-mini`; the n=192 robustness check was generated with gpt-5-mini. |

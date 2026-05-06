@@ -164,9 +164,12 @@ def main() -> int:
         lowest = min(scored_rows, key=lambda r: r[inst])
         rank_lowest[inst] = lowest["label"]
 
-    # Cross-instrument unanimous flag
+    # Cross-instrument unanimous flag. Requires at least two
+    # instruments — a single-instrument run is not "unanimous across
+    # instruments."
     unanimous_lowest = (
-        len(set(rank_lowest.values())) == 1
+        len(args.instruments) >= 2
+        and len(set(rank_lowest.values())) == 1
         and len(rank_lowest) == len(args.instruments)
     )
 

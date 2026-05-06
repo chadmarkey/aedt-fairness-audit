@@ -36,7 +36,7 @@ the lowest-scoring section under every instrument simultaneously.
 Example output on a generic medical-school evaluation skeleton with a
 single low-tone leave-of-absence paragraph: the leave-of-absence
 section is rank-lowest under both the VADER lexicon (+0.18 vs +0.55+
-elsewhere) and a RoBERTa transformer (+0.04 vs +0.85+ elsewhere). LLM
+elsewhere) and a RoBERTa transformer (−0.04 vs +0.85+ elsewhere). LLM
 judges produce similar rank-ordering on the same input.
 
 ### B. Excerpt vs full-document scoring (dilution test)
@@ -514,7 +514,7 @@ levels:
 | Nesting level | n pairs | mean | median | p10 | p90 |
 |---|---:|---:|---:|---:|---:|
 | within seed, within stratum | 576 | 0.166 | 0.160 | 0.111 | 0.225 |
-| within seed, across stratum | 17,856 | 0.215 | 0.210 | 0.153 | 0.285 |
+| within seed, across stratum | 17,664 | 0.215 | 0.210 | 0.153 | 0.285 |
 | across seed | 55,296 | 0.337 | 0.336 | 0.259 | 0.418 |
 
 Ratio (within-seed-across-stratum / across-seed) = **0.637**.
@@ -629,19 +629,20 @@ python -m tools.run_audit_2 \
 python -m tools.run_audit_2 \
     --corpus synthetic/data/ps_corpus.jsonl \
     --out-dir out/audit_2 --extractor llm \
-    --llm-provider openai --llm-model gpt-5-mini --bootstrap-reps 1000
+    --llm-provider openai --llm-model gpt-4o-mini --bootstrap-reps 1000
 
 # 5. Content equivalence
 python -m tools.content_equivalence \
     --corpus synthetic/data/ps_corpus.jsonl \
     --out out/content_equivalence/results.json
 
-# 6. Counterfactual decomposition
+# 6. Counterfactual decomposition (with paired-permutation p-values)
 python -m tools.counterfactual_decomposition \
     --corpus synthetic/data/ps_corpus.jsonl \
     --original-scores out/audit_2/audit_2_per_applicant_scores_llm.csv \
     --out-dir out/counterfactual \
-    --llm-provider openai --llm-model gpt-5-mini
+    --llm-provider openai --llm-model gpt-4o-mini \
+    --n-permutations 10000
 ```
 
 The corpus and `out/` are gitignored. Users running the harness see the
