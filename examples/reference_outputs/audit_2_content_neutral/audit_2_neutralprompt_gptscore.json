@@ -25,8 +25,8 @@
         "bootstrap_di_ci_lo": 0.7164179104477613,
         "bootstrap_di_ci_hi": 1.3469387755102042,
         "bootstrap_n_reps": 1000,
-        "permutation_p_value": 0.7472527472527473,
-        "permutation_n_perms_valid": 1000
+        "permutation_p_value": 0.7375262473752625,
+        "permutation_n_perms_valid": 10000
       },
       "race": {
         "axis": "race",
@@ -42,8 +42,8 @@
         "bootstrap_di_ci_lo": 0.761904761904762,
         "bootstrap_di_ci_hi": 1.5833333333333333,
         "bootstrap_n_reps": 1000,
-        "permutation_p_value": 0.42857142857142855,
-        "permutation_n_perms_valid": 1000
+        "permutation_p_value": 0.45065493450654937,
+        "permutation_n_perms_valid": 10000
       },
       "school_tier": {
         "axis": "school_tier",
@@ -59,8 +59,8 @@
         "bootstrap_di_ci_lo": 0.723404255319149,
         "bootstrap_di_ci_hi": 1.3548387096774193,
         "bootstrap_n_reps": 1000,
-        "permutation_p_value": 0.8141858141858141,
-        "permutation_n_perms_valid": 1000
+        "permutation_p_value": 0.8118188181181882,
+        "permutation_n_perms_valid": 10000
       }
     },
     "refugee": {
@@ -79,7 +79,7 @@
         "bootstrap_di_ci_hi": 1.3,
         "bootstrap_n_reps": 1000,
         "permutation_p_value": 1.0,
-        "permutation_n_perms_valid": 1000
+        "permutation_n_perms_valid": 10000
       },
       "race": {
         "axis": "race",
@@ -95,8 +95,8 @@
         "bootstrap_di_ci_lo": 0.8645833333333333,
         "bootstrap_di_ci_hi": 1.5833333333333333,
         "bootstrap_n_reps": 1000,
-        "permutation_p_value": 0.5904095904095904,
-        "permutation_n_perms_valid": 1000
+        "permutation_p_value": 0.599040095990401,
+        "permutation_n_perms_valid": 10000
       },
       "school_tier": {
         "axis": "school_tier",
@@ -112,8 +112,8 @@
         "bootstrap_di_ci_lo": 0.673469387755102,
         "bootstrap_di_ci_hi": 1.0972222222222223,
         "bootstrap_n_reps": 1000,
-        "permutation_p_value": 0.3306693306693307,
-        "permutation_n_perms_valid": 1000
+        "permutation_p_value": 0.3434656534346565,
+        "permutation_n_perms_valid": 10000
       }
     },
     "major_illness": {
@@ -132,7 +132,7 @@
         "bootstrap_di_ci_hi": 1.3958333333333333,
         "bootstrap_n_reps": 1000,
         "permutation_p_value": 1.0,
-        "permutation_n_perms_valid": 1000
+        "permutation_n_perms_valid": 10000
       },
       "race": {
         "axis": "race",
@@ -148,8 +148,8 @@
         "bootstrap_di_ci_lo": 0.7314814814814815,
         "bootstrap_di_ci_hi": 1.4090909090909092,
         "bootstrap_n_reps": 1000,
-        "permutation_p_value": 0.3646353646353646,
-        "permutation_n_perms_valid": 1000
+        "permutation_p_value": 0.37046295370462956,
+        "permutation_n_perms_valid": 10000
       },
       "school_tier": {
         "axis": "school_tier",
@@ -165,8 +165,8 @@
         "bootstrap_di_ci_lo": 0.75,
         "bootstrap_di_ci_hi": 1.4166666666666667,
         "bootstrap_n_reps": 1000,
-        "permutation_p_value": 0.7012987012987013,
-        "permutation_n_perms_valid": 1000
+        "permutation_p_value": 0.7255274472552745,
+        "permutation_n_perms_valid": 10000
       }
     },
     "academic_career": {
@@ -184,8 +184,8 @@
         "bootstrap_di_ci_lo": 0.796875,
         "bootstrap_di_ci_hi": 1.5,
         "bootstrap_n_reps": 1000,
-        "permutation_p_value": 0.6053946053946054,
-        "permutation_n_perms_valid": 1000
+        "permutation_p_value": 0.5852414758524147,
+        "permutation_n_perms_valid": 10000
       },
       "race": {
         "axis": "race",
@@ -201,8 +201,8 @@
         "bootstrap_di_ci_lo": 0.7941176470588235,
         "bootstrap_di_ci_hi": 1.6842105263157894,
         "bootstrap_n_reps": 1000,
-        "permutation_p_value": 0.3176823176823177,
-        "permutation_n_perms_valid": 1000
+        "permutation_p_value": 0.3117688231176882,
+        "permutation_n_perms_valid": 10000
       },
       "school_tier": {
         "axis": "school_tier",
@@ -218,8 +218,8 @@
         "bootstrap_di_ci_lo": 0.5267857142857143,
         "bootstrap_di_ci_hi": 1.013157894736842,
         "bootstrap_n_reps": 1000,
-        "permutation_p_value": 0.06493506493506493,
-        "permutation_n_perms_valid": 1000
+        "permutation_p_value": 0.0648935106489351,
+        "permutation_n_perms_valid": 10000
       }
     },
     "_total": {
@@ -237,8 +237,8 @@
         "bootstrap_di_ci_lo": 0.7424242424242423,
         "bootstrap_di_ci_hi": 1.3958333333333333,
         "bootstrap_n_reps": 1000,
-        "permutation_p_value": 0.9050949050949051,
-        "permutation_n_perms_valid": 1000
+        "permutation_p_value": 0.9106089391060894,
+        "permutation_n_perms_valid": 10000
       },
       "race": {
         "axis": "race",
@@ -254,8 +254,8 @@
         "bootstrap_di_ci_lo": 0.7314814814814815,
         "bootstrap_di_ci_hi": 1.492063492063492,
         "bootstrap_n_reps": 1000,
-        "permutation_p_value": 0.8831168831168831,
-        "permutation_n_perms_valid": 1000
+        "permutation_p_value": 0.8994100589941005,
+        "permutation_n_perms_valid": 10000
       },
       "school_tier": {
         "axis": "school_tier",
@@ -271,8 +271,8 @@
         "bootstrap_di_ci_lo": 0.673469387755102,
         "bootstrap_di_ci_hi": 1.296875,
         "bootstrap_n_reps": 1000,
-        "permutation_p_value": 0.7162837162837162,
-        "permutation_n_perms_valid": 1000
+        "permutation_p_value": 0.7221277872212779,
+        "permutation_n_perms_valid": 10000
       }
     }
   }

@@ -355,15 +355,15 @@ and
 |---|---|---:|:---:|
 | gpt-4o-mini | gpt-4o-mini | 0.650 | 0.059 |
 | gpt-4o-mini | claude-haiku-4-5 | 0.673 | 0.062 |
-| claude-haiku-4-5 | gpt-4o-mini | 0.698 | 0.068 |
-| claude-haiku-4-5 | claude-haiku-4-5 | 0.750 | 0.127 |
+| claude-haiku-4-5 | gpt-4o-mini | 0.698 | 0.071 |
+| claude-haiku-4-5 | claude-haiku-4-5 | 0.750 | 0.131 |
 
 Direction-consistent across all four cells: top-20 school applicants
 are selected at higher rates than lower-tier on the academic_career
 question regardless of which LLM family wrote or scored the corpus.
 Magnitudes weaken slightly under the haiku-generated corpus
 (0.70/0.75 vs 0.65/0.67) and uncorrected significance softens to
-borderline at the both-flipped cell (p = 0.127). No single cell
+borderline at the both-flipped cell (p = 0.131). No single cell
 clears Bonferroni for four comparisons (corrected threshold ≈ 0.0125).
 
 **This narrows the generator-confound caveat.** A pure generator
@@ -480,7 +480,7 @@ without LLM involvement at all.
   consistent across all four (generator × scorer) cells **under the
   LLM extractor** at uncorrected p ≈ 0.06–0.13. Same-family cell
   (gpt-4o-mini gen + gpt-4o-mini scorer) at p = 0.059; both-flipped
-  cell (claude-haiku gen + claude-haiku scorer) at p = 0.127.
+  cell (claude-haiku gen + claude-haiku scorer) at p = 0.131.
   **It also survives the content-neutral prompt variant** (DI 0.673,
   p = 0.065) — i.e., it does not collapse when the corpus prompt is
   rewritten to strip the research-cue content directive and to forbid

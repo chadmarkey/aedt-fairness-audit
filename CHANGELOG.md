@@ -314,8 +314,8 @@ table for academic_career × school_tier:
 |---|---|---:|:---:|
 | gpt-4o-mini | gpt-4o-mini | 0.650 | 0.059 |
 | gpt-4o-mini | claude-haiku-4-5 | 0.673 | 0.062 |
-| claude-haiku-4-5 | gpt-4o-mini | 0.698 | 0.068 |
-| claude-haiku-4-5 | claude-haiku-4-5 | 0.750 | 0.127 |
+| claude-haiku-4-5 | gpt-4o-mini | 0.698 | 0.071 |
+| claude-haiku-4-5 | claude-haiku-4-5 | 0.750 | 0.131 |
 
 Direction-consistent across all four cells. Magnitudes weaken under
 the haiku-generated corpus (0.70/0.75 vs 0.65/0.67) and uncorrected
