@@ -17,10 +17,15 @@ audit results, use tools.generate_ps_corpus to produce a real corpus and
 then run tools.run_audit_1 / tools.run_audit_2 on it.
 
 Usage:
-    python -m tools.smoke_test
+    python -m tools.smoke_test            # full path (downloads SBERT + spaCy)
+    python -m tools.smoke_test --offline  # offline path: no model downloads
+                                          # (regex-only mitigator, synthetic
+                                          # extractor scores, no SBERT, no VADER)
 """
 from __future__ import annotations
 
+import argparse
+import hashlib
 import json
 import os
 import sys
@@ -33,6 +38,7 @@ import pandas as pd
 
 from audit.screening import axis_audit
 from mitigator import BiasMitigator
+from mitigator.anonymization import Anonymizer
 from ps_extraction import PSExtractor, PATENT_QUESTIONS
 
 
@@ -155,16 +161,37 @@ def write_corpus(path: str):
     return len(MINI_CORPUS)
 
 
-def smoke_mitigator():
-    print("\n[1/4] Bias Mitigator smoke test", file=sys.stderr)
+def smoke_mitigator(offline: bool = False):
+    label = "Bias Mitigator (regex-only, offline)" if offline else "Bias Mitigator"
+    print(f"\n[1/4] {label} smoke test", file=sys.stderr)
     print("-" * 60, file=sys.stderr)
-    mitigator = BiasMitigator()
+    if offline:
+        # Skip spaCy NER; uses only the curated regex passes (pronouns,
+        # honorifics, ethnicity, schools) plus semantic substitution.
+        # No network needed.
+        mitigator = BiasMitigator(anonymizer=Anonymizer(use_ner=False))
+    else:
+        mitigator = BiasMitigator()
     sample = MINI_CORPUS[4]["text"]  # poverty_signal, white female
     mitigated = mitigator(sample)
     print(f"  Input  ({len(sample)} chars): {sample[:120]}...", file=sys.stderr)
     print(f"  Output ({len(mitigated)} chars): {mitigated[:120]}...", file=sys.stderr)
     print(f"  ✓ Bias Mitigator produced text", file=sys.stderr)
     return mitigator
+
+
+def _synthetic_score(text: str, q_key: str, expected_truth: bool) -> float:
+    """Deterministic synthetic per-question score for the offline smoke path.
+
+    Maps (text hash, question key, expected ground truth) to a stable score
+    in roughly [0, 1] without needing SBERT or any LLM. The score is shaped
+    so that PSs whose seed says expected=True get a higher score on that
+    question than PSs where expected=False, which is enough to exercise the
+    axis_audit code path with non-degenerate input.
+    """
+    h = hashlib.md5(f"{text[:200]}|{q_key}".encode("utf-8")).hexdigest()
+    base = (int(h[:8], 16) % 1000) / 1000.0  # uniform in [0, 1)
+    return 0.55 + 0.35 * base if expected_truth else 0.10 + 0.25 * base
 
 
 def smoke_extractor():
@@ -182,12 +209,26 @@ def smoke_extractor():
     return extractor
 
 
-def smoke_audit_2(extractor):
-    print("\n[3/4] Audit 2 (PS extraction) on full mini-corpus", file=sys.stderr)
+def smoke_audit_2(extractor=None, offline: bool = False):
+    if offline:
+        print("\n[2-3/4] axis_audit on synthetic deterministic scores "
+              "(offline; no SBERT)", file=sys.stderr)
+    else:
+        print("\n[3/4] Audit 2 (PS extraction) on full mini-corpus", file=sys.stderr)
     print("-" * 60, file=sys.stderr)
     rows = []
     for rec in MINI_CORPUS:
-        scores = extractor.score_text(rec["text"])
+        if offline:
+            # Deterministic synthetic scores: a hash-based stand-in for
+            # what the SBERT extractor would produce. Keeps the code path
+            # exercisable without network access.
+            scores = {
+                q: _synthetic_score(rec["text"], q,
+                                    rec["expected_question_truth"][q])
+                for q in PATENT_QUESTIONS
+            }
+        else:
+            scores = extractor.score_text(rec["text"])
         rows.append({
             "applicant_id": rec["applicant_id"],
             "stratum_race": rec["stratum"]["race"],
@@ -196,7 +237,9 @@ def smoke_audit_2(extractor):
             **scores,
         })
     df = pd.DataFrame(rows)
-    print(f"  Scored {len(df)} PSs", file=sys.stderr)
+    print(f"  Scored {len(df)} PSs"
+          + (" (synthetic offline scores)" if offline else ""),
+          file=sys.stderr)
 
     axis_columns = {
         "gender": "stratum_gender",
@@ -269,8 +312,25 @@ def smoke_audit_1(mitigator):
 
 
 def main() -> int:
+    ap = argparse.ArgumentParser(description="AEDT toolkit smoke test")
+    ap.add_argument(
+        "--offline", action="store_true",
+        help=(
+            "Skip steps that require network access on first run "
+            "(SBERT model download, spaCy NER model download, VADER "
+            "lexicon download). Uses regex-only mitigation, synthetic "
+            "deterministic scores in place of the SBERT extractor, and "
+            "skips the VADER Audit-1 path. Suitable for CI / sandbox "
+            "environments without internet access."
+        ),
+    )
+    args = ap.parse_args()
+
     print("=" * 72, file=sys.stderr)
-    print("AEDT Fairness Audit Toolkit — Smoke Test", file=sys.stderr)
+    title = "AEDT Fairness Audit Toolkit — Smoke Test"
+    if args.offline:
+        title += " (OFFLINE)"
+    print(title, file=sys.stderr)
     print("=" * 72, file=sys.stderr)
     print(f"\nMini-corpus: {len(MINI_CORPUS)} hand-curated PSs", file=sys.stderr)
     print(f"  Demographic strata: 2 (White/Female/top_20, Black/Male/lower_tier)",
@@ -282,10 +342,21 @@ def main() -> int:
     print(f"substantive results, run tools.generate_ps_corpus then", file=sys.stderr)
     print(f"tools.run_audit_1 / tools.run_audit_2 on the full corpus.", file=sys.stderr)
 
-    mitigator = smoke_mitigator()
-    extractor = smoke_extractor()
-    smoke_audit_2(extractor)
-    smoke_audit_1(mitigator)
+    if args.offline:
+        print(f"\n--offline: skipping SBERT/spaCy/VADER model downloads. "
+              f"Mitigator runs regex-only; extractor is replaced with a "
+              f"deterministic synthetic stand-in.", file=sys.stderr)
+
+    mitigator = smoke_mitigator(offline=args.offline)
+    if args.offline:
+        smoke_audit_2(extractor=None, offline=True)
+        print("\n[4/4] Audit 1 (VADER) — skipped under --offline "
+              "(VADER lexicon download not guaranteed offline).",
+              file=sys.stderr)
+    else:
+        extractor = smoke_extractor()
+        smoke_audit_2(extractor)
+        smoke_audit_1(mitigator)
 
     # Also write the mini corpus to /tmp so user can manually run the CLIs
     with tempfile.NamedTemporaryFile(

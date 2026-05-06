@@ -110,13 +110,28 @@ def disparity_summary(group_metrics: Dict[str, Dict[str, float]]) -> Dict[str, f
 
 
 def threshold_sweep(
-    df: pd.DataFrame, proba: np.ndarray, invite_rates: Iterable[float]
+    df: pd.DataFrame,
+    proba: np.ndarray,
+    invite_rates: Iterable[float],
+    tiebreak_seed: int = 0,
 ) -> Dict[str, Dict[str, float]]:
-    """Rank-based selection at each invite rate (no tie inflation)."""
+    """Rank-based selection at each invite rate (no tie inflation).
+
+    Uses seeded random tie-breaking via numpy.lexsort so that, when
+    proba contains ties at the K-th boundary, selection does not depend
+    on the row order of `df`. This matters when downstream users pass a
+    stratum-blocked dataframe with tied probabilities (e.g., near-discrete
+    LLM-extractor scores) — stable-sort tie-breaking would bias selection
+    toward whichever stratum appears first in the dataframe. See the
+    parallel fix at audit/screening.py:top_k_selection and the 2026-05-06
+    CHANGELOG entry that documents the original bug.
+    """
     results: Dict[str, Dict[str, float]] = {}
     group = df["group"].to_numpy()
     n = len(proba)
-    order = np.argsort(-proba, kind="stable")
+    rng = np.random.default_rng(tiebreak_seed)
+    tiebreak = rng.random(n)
+    order = np.lexsort((tiebreak, -np.asarray(proba, dtype=float)))
 
     for invite_rate in invite_rates:
         k = int(round(invite_rate * n))

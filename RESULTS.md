@@ -135,6 +135,7 @@ fresh JSON + PNG/PDF figures to user-supplied `--out-dir` paths.
 | Audit 2 LLM cross-family (claude-haiku-4-5 scorer, gpt-4o-mini corpus) | `examples/reference_outputs/audit_2_crossfam/audit_2_results_llm.json` |
 | Audit 2 LLM cross-generator (claude-haiku corpus × gpt-4o-mini scorer) | `examples/reference_outputs/audit_2_crossgen/audit_2_haikugen_gptscore.json` |
 | Audit 2 LLM cross-generator (claude-haiku corpus × claude-haiku scorer) | `examples/reference_outputs/audit_2_crossgen/audit_2_haikugen_haikuscore.json` |
+| Audit 2 LLM content-neutral prompt (gpt-4o-mini × gpt-4o-mini) | `examples/reference_outputs/audit_2_content_neutral/audit_2_neutralprompt_gptscore.json` |
 | Content equivalence | `examples/reference_outputs/content_equivalence/results.json` |
 | Counterfactual decomposition | `examples/reference_outputs/counterfactual/counterfactual_decomposition.json` |
 | Screening with counterfactual (multi-model) | `examples/reference_outputs/screening_counterfactual/results_multimodel.json` |
@@ -373,6 +374,84 @@ the aggregate is at parity. The aggregate finding was over-stated;
 the per-question signal carries; aggregation does not propagate it
 across families.
 
+### Audit 2 LLM content-neutral prompt sensitivity test
+
+The cross-family checks above hold the corpus prompt constant. The
+prompt's voice-variation directive ("Adopt a stylistic voice
+plausible for the assigned profile. Vocabulary register, sentence
+cadence, and narrative framing should differ across profiles even
+when content is identical.") and its top_20 school description
+("the school cue should be subtle — a research lab, a faculty mentor,
+an institution-specific program") could plausibly be the source of
+the school_tier × academic_career signal. To test this, an opt-in
+content-neutral prompt variant (`--prompt-variant content_neutral`
+on `tools.generate_ps_corpus`) was added that:
+
+- Removes the "research lab / faculty mentor / institution-specific
+  program" content cue from the top_20 school description; all three
+  tier descriptions now ask the generator to identify the school by
+  name only.
+- Replaces the voice-variation directive with explicit instruction
+  that academic register, narrative sophistication, and research-
+  leaning framing be HELD CONSTANT across school tiers; only the
+  school name itself differs.
+
+A second n = 384 corpus was generated with `gpt-4o-mini` under the
+content-neutral prompt and audited with the gpt-4o-mini scorer.
+Reference output:
+[`examples/reference_outputs/audit_2_content_neutral/audit_2_neutralprompt_gptscore.json`](examples/reference_outputs/audit_2_content_neutral/audit_2_neutralprompt_gptscore.json).
+
+#### academic_career × school_tier under the content-neutral prompt
+
+| Prompt variant | DI | perm-p |
+|---|---:|:---:|
+| original | 0.650 | 0.059 |
+| **content_neutral** | **0.673** | **0.065** |
+
+Essentially identical. The signal is robust to prompt-level
+intervention.
+
+#### Token-frequency follow-up
+
+The token-frequency diagnostic (academic-register tokens per 100
+words, in seeds where ground truth says NOT pursuing academic career)
+*did* collapse under the content-neutral prompt:
+
+| Seed | original prompt | content-neutral prompt |
+|---|:---:|:---:|
+| control_neutral, top_20 ÷ lower_tier | 3.6× | 1.0× (basically flat) |
+| immigration_signal, top_20 ÷ lower_tier | 2.3× | 1.1× |
+| poverty_signal, top_20 ÷ lower_tier | 2.0× | 2.2× (slightly *more*) |
+
+So the corpus prompt was indeed shaping academic-register density.
+But the audit signal persisted unchanged when that density was
+flattened — which means the LLM extractor is reading something other
+than literal academic-register token density. The most plausible
+remaining mechanism is school-name associations: top_20 PSs still
+name "Harvard," "Stanford," "Hopkins," "UCSF" etc. (the school name
+is the only school cue under the content-neutral prompt), and the
+LLM extractor's training data likely associates those names with
+academic content. Subtler stylistic features that the prompt's
+"hold register constant" instruction did not fully suppress are also
+plausible.
+
+What this rules out: a corpus-prompt design effect on academic-
+register tokens specifically. What it does not rule out: school-
+name-driven LLM associations, or finer-grained stylistic confounds
+the content-neutral prompt does not control for.
+
+A natural next sensitivity test — replacing school names with
+neutral placeholders ("[TIER1_SCHOOL]," "[TIER2_SCHOOL]," etc.)
+during the audit — is left as a follow-on. The current toolkit's
+mitigator already strips school names; the counterfactual
+decomposition section above shows that stripping does not move the
+academic_career × school_tier signal under marker-stripping
+(paired-perm p = 0.65). Read together, the prompt-neutral and
+marker-stripped variants both fail to dissolve the signal,
+suggesting the school-name association hypothesis would also need
+either a controlled name-substitution test or a corpus generated
+without LLM involvement at all.
+
 **Substantive interpretation, conservative version:**
 
 - **No race-axis finding survives at conventional significance under
@@ -384,10 +463,16 @@ across families.
   consistent across all four (generator × scorer) cells **under the
   LLM extractor** at uncorrected p ≈ 0.06–0.13. Same-family cell
   (gpt-4o-mini gen + gpt-4o-mini scorer) at p = 0.059; both-flipped
-  cell (claude-haiku gen + claude-haiku scorer) at p = 0.127. It does
-  not survive multiple-comparisons correction. It is consistent with
-  both LLM families reading more academic narrative out of top-20 PSs
-  that both LLM families also wrote.
+  cell (claude-haiku gen + claude-haiku scorer) at p = 0.127.
+  **It also survives the content-neutral prompt variant** (DI 0.673,
+  p = 0.065) — i.e., it does not collapse when the corpus prompt is
+  rewritten to strip the research-cue content directive and to forbid
+  voice variation across school tiers, even though that intervention
+  does flatten the academic-register token-density lift. It does not
+  survive multiple-comparisons correction. The remaining most-likely
+  mechanism is LLM-extractor associations between specific school
+  names ("Harvard," "Stanford," "Hopkins") and academic content,
+  inherited from training data.
 - **The signal does not hold across extractor architectures.** Under
   the SBERT extractor on the same corpus, academic_career ×
   school_tier is DI = 1.242 (lower-resource group — combined
@@ -398,12 +483,16 @@ across families.
   in only the LLM extractor.
 - **The earlier generator-confound caveat is narrowed**, not removed.
   The cross-generator check rules out a *pure* generator confound
-  (where the signal disappears under a non-gpt-4o-mini generator).
-  The signal could still reflect a shared LLM tendency to associate
-  "academic narrative" with "top-20 school," learned from training
-  data that reflects real-world correlations. The audit cannot
-  distinguish that hypothesis from "the LLMs are reading authentic
-  content variation in the synthetic corpus."
+  (signal disappears under a non-gpt-4o-mini generator). The
+  content-neutral prompt check rules out a corpus-prompt-design
+  effect on academic-register tokens specifically. The signal could
+  still reflect either (a) a shared LLM tendency to associate
+  specific top_20 school names with academic content, learned from
+  training data correlations, or (b) authentic content variation in
+  the synthetic corpus that the LLM extractor reads. The audit
+  cannot distinguish those hypotheses without a corpus generated
+  without LLM involvement at all, or a controlled school-name
+  substitution test.
 
 The audit's substantive claim under the corrected-tiebreak audit is
 narrower than what the prior version reported:

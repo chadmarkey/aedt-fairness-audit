@@ -62,20 +62,23 @@ The honest read of the audit findings:
   The aggregate `_total` × school_tier shifts from 0.673 to 0.807,
   paired-perm p = 0.015 — the aggregate moves toward parity at
   conventional significance, the per-question driver does not.
-- **The school_tier signal may reflect a corpus-prompt design effect
-  rather than scoring bias.** A token-frequency diagnostic on the
-  existing corpora found that under both generators, top_20 PSs
-  contain 1.4× to 3.6× more academic-register tokens (research, lab,
-  faculty, mentor, scientist, …) than lower_tier PSs in seeds where
-  the ground truth says NOT pursuing academic career. The corpus
-  prompt explicitly instructs the generator to "vary stylistic voice
-  across profiles" and gives top_20 a "subtle research lab / faculty
-  mentor / institution-specific program" cue that lower-tier
-  descriptions don't have. The LLM extractor is reading academic
-  content the generator wrote in response to that prompt directive.
-  An opt-in `--prompt-variant content_neutral` mode strips those
-  directives; sensitivity-test results from running the audit on a
-  content-neutral corpus will appear in `CHANGELOG.md`.
+- **The school_tier signal survives a content-neutral prompt
+  rewrite.** A token-frequency diagnostic showed that under the
+  original prompt, top_20 PSs contained 1.4× to 3.6× more academic-
+  register tokens than lower_tier PSs in non-academic seeds. An
+  opt-in `--prompt-variant content_neutral` mode rewrites the corpus
+  prompt to remove the "research lab / faculty mentor" content cue
+  for top_20 and to forbid academic-register variation across school
+  tiers. Under that rewrite, token-density does flatten across tiers
+  (basically equal in non-academic seeds). But the audit signal
+  *persists*: academic_career × school_tier DI = 0.673, p = 0.065 —
+  essentially identical to the original 0.650, p = 0.059. The LLM
+  extractor is reading something other than literal academic-register
+  token density. The most plausible remaining mechanism is school-
+  name associations: top_20 PSs still name "Harvard," "Stanford,"
+  "Hopkins," "UCSF," and the LLM extractor's training data likely
+  associates those names with academic content. A controlled school-
+  name substitution test is left as a follow-on.
 
 A discrete-statistic / tie-breaking pitfall was discovered and fixed
 during a 2026-05-06 validation pass. Earlier versions of the audit
@@ -700,11 +703,19 @@ to `False`; cluster exemplars are not serialized to manifests.
 ## Smoke test
 
 ```bash
-python -m tools.smoke_test
+python -m tools.smoke_test            # full path
+python -m tools.smoke_test --offline  # CI / sandbox-friendly
 ```
 
 Runs a 16-document hand-curated corpus through the BiasMitigator,
 PSExtractor, and per-axis fairness metrics. ~1 minute end to end.
+
+`--offline` skips network-dependent steps (SBERT model download,
+spaCy NER model download, VADER lexicon download). It runs the
+mitigator with regex-only redaction (no spaCy NER), substitutes a
+deterministic synthetic score for the SBERT extractor, and exercises
+the full `axis_audit` code path without requiring internet access.
+Suitable for CI environments and offline reproducibility checks.
 
 ## Methodology references
 

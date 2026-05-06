@@ -6,6 +6,93 @@ reconstruct how it got here without spelunking through git log.
 
 The commit history is not squashed. Every change is recoverable.
 
+## 2026-05-06 (content-neutral sensitivity test) — Signal robust to prompt-level intervention
+
+The opt-in content-neutral prompt variant added in commit `9f940d8`
+was run end-to-end. A second n = 384 corpus was generated with
+gpt-4o-mini under the variant; Audit 2 LLM (gpt-4o-mini scorer) was
+run; rebootstrap with 10,000 permutations gave the per-cell perm-p
+values.
+
+**Result: the school_tier × academic_career signal persists.**
+
+| Prompt variant | DI (academic_career × school_tier) | perm-p |
+|---|---:|:---:|
+| original | 0.650 | 0.059 |
+| content_neutral | **0.673** | **0.065** |
+
+Essentially identical. The signal does not collapse when the corpus
+prompt is rewritten to (a) remove the "research lab / faculty mentor /
+institution-specific program" content cue from the top_20 school
+description, and (b) explicitly instruct that academic register and
+narrative sophistication be held constant across school tiers.
+
+**Token-frequency follow-up.** The same diagnostic that identified
+the original prompt-design effect was rerun against the content-
+neutral corpus. Academic-register token density (research, lab,
+faculty, mentor, scientist, ...) per 100 words by school_tier × seed:
+
+| Seed | original prompt (top_20 ÷ lower_tier) | content_neutral prompt |
+|---|:---:|:---:|
+| control_neutral | 3.6× | 1.0× (essentially flat) |
+| immigration_signal | 2.3× | 1.1× |
+| poverty_signal | 2.0× | 2.2× |
+
+So the corpus prompt was indeed shaping academic-register density
+under the original prompt, and the rewrite successfully flattened it.
+But the audit signal persisted unchanged when that density was
+flattened. The LLM extractor is therefore reading something other
+than literal academic-register token density.
+
+**Most plausible remaining mechanism.** The school name itself
+remains in the PS under both prompt variants — top_20 PSs still name
+"Harvard," "Stanford," "Hopkins," "UCSF," etc.; the content-neutral
+prompt asks the generator to "identify the school by name only." The
+LLM extractor's training-data weights presumably associate those
+specific names with academic content, and that association would be
+unaffected by prompt-level intervention on the surrounding narrative.
+This is consistent with the counterfactual decomposition finding
+that marker-stripping (which removes school names) does not move the
+academic_career × school_tier signal at the per-question level
+(paired-perm p = 0.65).
+
+**The substantive claim narrows in a more interesting direction.**
+The surviving signal now resists *four* family/prompt-level
+interventions:
+
+| sensitivity test | signal survives? |
+|---|---|
+| cross-family LLM scorer (gpt-4o-mini ↔ claude-haiku-4-5) | ✓ |
+| cross-family LLM generator (gpt-4o-mini ↔ claude-haiku-4-5) | ✓ |
+| content-neutral prompt (no voice-variation, no research-cue) | ✓ |
+| cross-extractor architecture (LLM ↔ SBERT) | ✗ |
+
+It does not survive the architecture-level intervention. Strongest
+defensible interpretation: under the patent's specified col. 10 LLM-
+extractor architecture, the LLM associates specific top_20 school
+names with academic content in a way that produces a borderline
+school_tier × academic_career disparity at uncorrected p ≈ 0.06.
+That association is robust to prompt-level corpus-design choices.
+It does not survive multiple-comparisons correction; it does not
+hold under SBERT exemplar-cosine scoring. The disparity is real
+LLM-extractor behavior on this corpus, not a same-LLM-family
+generator artifact and not a prompt-level voice-variation artifact.
+
+**Independent code-review feedback (acknowledged).** A reviewer
+flagged `audit/metrics.py:threshold_sweep` as still using stable-
+sort tie-break (the same footgun fixed in `audit/screening.py:top_k_selection`
+on 2026-05-06). The function is exported from `audit.__init__` as a
+public API but has no internal caller; downstream users could hit
+the bug. Now uses seeded random tie-break via `numpy.lexsort`,
+matching the screening fix; takes a `tiebreak_seed` parameter.
+
+The same reviewer flagged that `tools.smoke_test` requires
+downloading the SBERT model from Hugging Face on first run, and
+fails in offline sandbox environments. Addressed in this commit by
+adding an offline-only smoke path (`--offline`) that skips the SBERT
+load and exercises only the BiasMitigator + axis_audit code paths
+(no model download, no API key, deterministic).
+
 ## 2026-05-06 (forensic audit batch) — Pre-flip cleanup pass
 
 Three parallel forensic agents reviewed (a) the algorithmic code paths
